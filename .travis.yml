@@ -9,6 +9,6 @@ install:
   - python setup.py install
   - pip install -I PyQt5
   - pip install --upgrade -I sip
-  - pip install --upgarde -I PyQt5-sip
+  - pip install --upgrade -I PyQt5-sip
 script:
   - pytest -vv
