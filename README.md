@@ -16,11 +16,11 @@ For remote server processing, follow the guide below in order to configure the [
 
 
 ## Demo 
-![screenshot](docs/ultimatelabeling.png)
+![screenshot](docs/ultimatelabeling.jpg)
 
-![uptown_funk](docs/uptown_funk.png)
+![uptown_funk](docs/uptown_funk.jpg)
 
-![roundabout](docs/roundabout.png)
+![roundabout](docs/roundabout.jpg)
 
 
 ## Features
