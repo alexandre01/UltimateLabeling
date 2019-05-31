@@ -5,8 +5,10 @@ python:
 install:
   - sudo apt-get update
   - sudo apt-get -y install python3-pyqt5
-  - pip install --upgrade -I sip PyQt5-sip
   - pip install --upgrade -I pip setuptools
   - python setup.py install
+  - pip install -I PyQt5
+  - pip install --upgrade -I sip
+  - pip install --upgarde -I PyQt5-sip
 script:
   - pytest -vv
