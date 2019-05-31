@@ -1,5 +1,7 @@
 # UltimateLabeling
 
+[![Build Status](https://travis-ci.com/alexandre01/UltimateLabeling.svg?branch=master)](https://travis-ci.com/alexandre01/UltimateLabeling)
+
 A multi-purpose Video Labeling GUI in Python with integrated SOTA detector and tracker. Developed using PyQt5.
 
 
@@ -29,7 +31,8 @@ For remote server processing, follow the guide below in order to configure the [
 
 ## Remote server configuration
 To configure the remote GPU server, follow the step below:
-```
+
+```sh
 git clone https://github.com/alexandre01/UltimateLabeling_server.git
 cd UltimateLabeling_server
 pip install -r requirements.txt
@@ -40,7 +43,8 @@ bash detection/setup.sh
 The data images and videos should be placed in the folder `data`, following the same naming as the client code.
 
 To extract video files, use the following script:
-```
+
+```sh
 bash extract.sh data/video_file.mp4
 ```
 
