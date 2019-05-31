@@ -1,4 +1,5 @@
 PyQt5
+PyQt5-sip
 opencv-python
 paramiko
 scp
