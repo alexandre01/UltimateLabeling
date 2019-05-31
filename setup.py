@@ -35,7 +35,8 @@ setup(
         'numpy',
         'tqdm',
         'torch',
-        'pillow'
+        'pillow',
+        'matplotlib'
     ],
     extras_require={
             'test': [
