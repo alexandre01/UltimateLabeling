@@ -39,7 +39,6 @@ setup(
     ],
     extras_require={
             'test': [
-                'pylint',
                 'pytest',
             ],
     },
