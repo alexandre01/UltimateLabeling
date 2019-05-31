@@ -1,7 +1,7 @@
 from PyQt5.QtWidgets import QPushButton, QGroupBox, QHBoxLayout, QStyle, QPlainTextEdit, QMessageBox
 from PyQt5.QtCore import QThread, pyqtSignal
-from models.tracker import SocketTracker
-from models import Detection, FrameMode
+from ultimatelabeling.models.tracker import SocketTracker
+from ultimatelabeling.models import Detection, FrameMode
 import cv2
 
 

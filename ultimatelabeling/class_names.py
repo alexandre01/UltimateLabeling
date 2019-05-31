@@ -81,8 +81,3 @@ DEFAULT_CLASS_NAMES = {
  89: 'hair drier',
  90: 'toothbrush'
 }
-
-CUSTOM_LABELS = {
- 0: '__background__',
- 1: 'template'
-}

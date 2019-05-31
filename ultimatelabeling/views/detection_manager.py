@@ -1,8 +1,8 @@
 from PyQt5.QtWidgets import QGroupBox, QHBoxLayout, QPushButton, QMessageBox, QCheckBox, QComboBox, QFormLayout, QLabel, QVBoxLayout
 from PyQt5.QtCore import QThread
-from models import FrameMode
-from models.detector import SocketDetector
-from models.polygon import Bbox
+from ultimatelabeling.models import FrameMode
+from ultimatelabeling.models.detector import SocketDetector
+from ultimatelabeling.models.polygon import Bbox
 import os
 
 

@@ -1,8 +1,8 @@
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import Qt
-from views import *
-from models import State, StateListener, KeyboardNotifier
-from styles import Theme
+from .views import *
+from .models import State, StateListener, KeyboardNotifier
+from .styles import Theme
 
 
 app = QApplication([])

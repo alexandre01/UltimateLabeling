@@ -3,7 +3,7 @@ from .track_info import Detection
 import json
 import socket
 import pickle
-import utils
+from ultimatelabeling import utils
 
 
 class Detector:

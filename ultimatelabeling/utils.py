@@ -1,5 +1,5 @@
 import cv2
-from models.polygon import Bbox
+from .models.polygon import Bbox
 import numpy as np
 import os
 from tqdm import tqdm

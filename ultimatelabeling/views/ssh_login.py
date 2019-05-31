@@ -1,6 +1,6 @@
 from PyQt5.QtWidgets import QGroupBox, QLabel, QLineEdit, QFormLayout, QPushButton, QMessageBox
 from PyQt5.QtCore import QThread, pyqtSignal
-from models import StateListener, SSHCredentials
+from ultimatelabeling.models import StateListener, SSHCredentials
 import paramiko
 from scp import SCPClient
 

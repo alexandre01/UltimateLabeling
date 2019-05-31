@@ -1,2 +1,11 @@
 .idea
 .pytest_cache
+.ipynb_checkpoints/
+build/
+*.egg-info
+.eggs/
+__pycache__
+dist/
+
+data/
+output/

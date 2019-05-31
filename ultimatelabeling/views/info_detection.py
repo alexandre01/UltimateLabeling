@@ -1,6 +1,6 @@
 from PyQt5.QtWidgets import QGroupBox, QVBoxLayout, QHBoxLayout, QPushButton, QCheckBox, QComboBox, QLabel
 from PyQt5.QtCore import Qt
-from models import StateListener
+from ultimatelabeling.models import StateListener
 
 
 class InfoDetection(QGroupBox, StateListener):

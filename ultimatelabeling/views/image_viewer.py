@@ -2,13 +2,13 @@ import cv2
 from PyQt5.QtWidgets import QWidget, QApplication
 from PyQt5.QtCore import QPoint, Qt
 from PyQt5.QtGui import QImage, QPainter
-from models import StateListener
-from utils import draw_detection
-from models import KeyboardListener
-from models.polygon import Bbox
-from models.track_info import Detection
+from ultimatelabeling.models import StateListener
+from ultimatelabeling.utils import draw_detection
+from ultimatelabeling.models import KeyboardListener
+from ultimatelabeling.models.polygon import Bbox
+from ultimatelabeling.models.track_info import Detection
 import numpy as np
-import utils
+from ultimatelabeling import utils
 
 
 class Event:

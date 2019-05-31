@@ -1,6 +1,6 @@
 from PyQt5.QtWidgets import QGroupBox, QHBoxLayout, QPushButton
-from models import StateListener
-from styles import Theme
+from ultimatelabeling.models import StateListener
+from ultimatelabeling.styles import Theme
 
 
 class ThemePicker(QGroupBox, StateListener):

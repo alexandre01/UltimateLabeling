@@ -10,16 +10,17 @@ from PIL import Image
 from os import makedirs
 from os.path import join, isdir
 
-from siamMask.utils.bbox_helper import get_axis_aligned_bbox, cxy_wh_2_rect
+from .utils.bbox_helper import get_axis_aligned_bbox, cxy_wh_2_rect
 
 import torch
 from torch.autograd import Variable
 import torch.nn.functional as F
 
-from siamMask.utils.anchors import Anchors
-from siamMask.utils.tracker_config import TrackerConfig
+from .utils.anchors import Anchors
+from .utils.tracker_config import TrackerConfig
 
 thrs = np.arange(0.3, 0.5, 0.05)
+
 
 def to_torch(ndarray):
     if type(ndarray).__module__ == 'numpy':

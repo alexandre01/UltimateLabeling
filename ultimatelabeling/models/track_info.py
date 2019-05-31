@@ -1,7 +1,9 @@
 import json
 import os
 from .polygon import Polygon, Bbox, Keypoints
-from class_names import DEFAULT_CLASS_NAMES
+from ultimatelabeling.class_names import DEFAULT_CLASS_NAMES
+from ultimatelabeling.config import OUTPUT_DIR
+
 
 class Detection:
     def __init__(self, class_id=0, track_id=0, polygon=Polygon(), bbox=Bbox(), keypoints=Keypoints()):
@@ -47,7 +49,7 @@ class TrackInfo:
         self.load_from_disk()
 
     def load_from_disk(self):
-        file_name = "output/{}.json".format(self.video_name)
+        file_name = os.path.join(OUTPUT_DIR, "{}.json".format(self.video_name))
 
         if not os.path.exists(file_name):
             return
@@ -89,5 +91,5 @@ class TrackInfo:
             return N+1
 
     def save_to_disk(self):
-        with open("output/{}.json".format(self.video_name), "w") as f:
+        with open(os.path.join(OUTPUT_DIR, "{}.json".format(self.video_name)), "w") as f:
             json.dump(self.to_json(), f, indent=4)

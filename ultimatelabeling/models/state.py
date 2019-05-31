@@ -2,10 +2,11 @@ import pickle
 import os
 import glob
 import re
-from styles import Theme
+from ultimatelabeling.styles import Theme
 from .ssh_credentials import SSHCredentials
 from .track_info import TrackInfo
-import utils
+from ultimatelabeling import utils
+from ultimatelabeling.config import DATA_DIR, STATE_PATH
 
 
 class FrameMode:
@@ -40,11 +41,12 @@ class State:
         self.listeners = set()
 
     def find_videos(self):
-        return next(os.walk('data/'))[1]
+        print(DATA_DIR)
+        return next(os.walk(DATA_DIR))[1]
 
     def check_raw_videos(self):
-        files = glob.glob("data/*.mp4")
-        files.extend(glob.glob("data/*.mov"))
+        files = glob.glob(os.path.join(DATA_DIR, "*.mp4"))
+        files.extend(glob.glob(os.path.join(DATA_DIR, "*.mov")))
 
         for file in files:
             base = os.path.basename(file)
@@ -52,22 +54,22 @@ class State:
 
             if filename not in self.video_list:
                 print("Extracting video {}...".format(base))
-                utils.convert_video_to_frames(file, os.path.join("data", filename))
+                utils.convert_video_to_frames(file, os.path.join(DATA_DIR, filename))
         self.video_list = self.find_videos()
 
     def update_file_names(self):
         if self.current_video:
-            self.file_names = sorted(glob.glob('data/{}/*.jpg'.format(self.current_video)), key = utils.natural_sort_key)
+            self.file_names = sorted(glob.glob(os.path.join(DATA_DIR, self.current_video, '*.jpg')), key = utils.natural_sort_key)
             self.nb_frames = len(self.file_names)
 
     def save_state(self):
-        with open('state.pkl', 'wb') as f:
+        with open(STATE_PATH, 'wb') as f:
             state_dict = {k: v for k, v in self.__dict__.items() if k != "listeners" and k != "track_info"}
             pickle.dump(state_dict, f)
 
     def load_state(self):
-        if os.path.exists("state.pkl"):
-            with open('state.pkl', 'rb') as f:
+        if os.path.exists(STATE_PATH):
+            with open(STATE_PATH, 'rb') as f:
                 self.__dict__.update(pickle.load(f))
 
         # Reinitialize SSH connection info

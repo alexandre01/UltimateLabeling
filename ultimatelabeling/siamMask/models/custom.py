@@ -10,7 +10,7 @@ from .mask import Mask
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from siamMask.utils.load_helper import load_pretrain
+from ..utils.load_helper import load_pretrain
 from .resnet import resnet50
 
 

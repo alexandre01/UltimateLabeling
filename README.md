@@ -1,6 +1,7 @@
 # UltimateLabeling
 
 [![Build Status](https://travis-ci.com/alexandre01/UltimateLabeling.svg?branch=master)](https://travis-ci.com/alexandre01/UltimateLabeling)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 A multi-purpose Video Labeling GUI in Python with integrated SOTA detector and tracker. Developed using PyQt5.
 
@@ -21,6 +22,7 @@ For remote server processing, follow the guide below in order to configure the [
 
 ![roundabout](docs/roundabout.png)
 
+
 ## Features
 - SSH connection to the remote server (see below to configure the server)
 - YOLO and OpenPifPaf integrated object & pose detectors (single frame and entire video mode)
@@ -29,8 +31,26 @@ For remote server processing, follow the guide below in order to configure the [
 - Zoom on the video, resizable bounding boxes and skeletons
 - Dark mode!
 
+
+## Installation
+
+Install the requirements using `pip` as follows:
+
+```
+pip install -r requirements
+```
+
+Put the videos (folder of images or video file, the frames will be extracted automatically) inside the `data` folder. Then, open the GUI using 
+
+```sh
+python -m ultimatelabeling.main
+```
+
+After closing the window, the annotations are available in the `output` folder.
+
+
 ## Remote server configuration
-To configure the remote GPU server, follow the step below:
+To configure the remote GPU server, follow the steps below:
 
 ```sh
 git clone https://github.com/alexandre01/UltimateLabeling_server.git
@@ -40,7 +60,7 @@ bash siamMask/setup.sh
 bash detection/setup.sh
 ```
 
-The data images and videos should be placed in the folder `data`, following the same naming as the client code.
+The data images and videos should be placed in the folder `data`, similarly to the client code.
 
 To extract video files, use the following script:
 
@@ -48,3 +68,6 @@ To extract video files, use the following script:
 bash extract.sh data/video_file.mp4
 ```
 
+
+## Licence
+Copyright (c) 2019 Alexandre Carlier, released under the MIT licence.

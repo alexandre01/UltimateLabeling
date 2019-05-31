@@ -1,6 +1,8 @@
+import os
 from PyQt5.QtWidgets import QSlider, QWidget, QHBoxLayout, QLabel
 from PyQt5.QtCore import Qt
-from models import StateListener, KeyboardListener, FrameMode
+from ultimatelabeling.models import StateListener, KeyboardListener, FrameMode
+from ultimatelabeling.config import ROOT_DIR
 
 
 class VideoSlider(QWidget, StateListener, KeyboardListener):
@@ -15,7 +17,7 @@ class VideoSlider(QWidget, StateListener, KeyboardListener):
         self.slider.setTickPosition(QSlider.TicksBothSides)
         self.slider.setTickInterval(5)
         self.slider.setSingleStep(1)
-        self.slider.setStyleSheet(open("styles/slider.style").read())
+        self.slider.setStyleSheet(open(os.path.join(ROOT_DIR, 'styles', 'slider.style')).read())
         self.slider.valueChanged.connect(lambda: self.state.set_current_frame(self.slider.value(), frame_mode=FrameMode.MANUAL))
 
         self.label = QLabel()
