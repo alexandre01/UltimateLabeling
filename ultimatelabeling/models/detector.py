@@ -15,7 +15,7 @@ class Detector:
     def init(self):
         pass
 
-    def detect(self, image_path, crop_area=None):
+    def detect(self, image_path, crop_area=None, detector="YOLO"):
         """
         Output:
             detections ([Detection])
@@ -36,7 +36,7 @@ class SocketDetector(Detector):
         self.client_socket.connect((self.HOST, self.PORT))
         self.receive_ok_signal()
 
-    def detect(self, image_path, detector="YOLO", crop_area=None):
+    def detect(self, image_path, crop_area=None, detector="YOLO"):
         options = {
             "filename": image_path,
             "seq_path": None,

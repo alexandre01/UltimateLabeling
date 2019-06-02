@@ -9,3 +9,4 @@ from .tracking_manager import TrackingManager
 from .hungarian_manager import HungarianManager
 from .detection_manager import DetectionManager
 from .info_detection import InfoDetection
+from .options import Options

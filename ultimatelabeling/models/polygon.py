@@ -3,7 +3,6 @@ import math
 
 
 class Bbox:
-
     @staticmethod
     def get_thickness():
         return 2

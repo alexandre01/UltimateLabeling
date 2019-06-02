@@ -19,6 +19,7 @@ class PlayerThread(QThread):
 
         # TODO: auto pause when finished
 
+
 class PlayerWidget(QGroupBox, KeyboardListener):
     def __init__(self, state):
         super().__init__("Player")

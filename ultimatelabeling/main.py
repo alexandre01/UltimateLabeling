@@ -48,8 +48,10 @@ class CentralWidget(QWidget, StateListener):
         self.slider = VideoSlider(self.state)
         self.player = PlayerWidget(self.state)
         self.theme_picker = ThemePicker(self.state)
+        self.options = Options(self.state)
         self.ssh_login = SSHLogin(self.state)
-        self.detection_manager = DetectionManager(self.state)
+
+        self.detection_manager = DetectionManager(self.state, self.ssh_login)
         self.tracking_manager = TrackingManager(self.state)
         self.hungarian_button = HungarianManager(self.state)
         self.info_detection = InfoDetection(self.state)
@@ -57,7 +59,7 @@ class CentralWidget(QWidget, StateListener):
         self.keyboard_notifier = KeyboardNotifier()
         self.keyPressEvent = self.keyboard_notifier.keyPressEvent
         self.keyReleaseEvent = self.keyboard_notifier.keyReleaseEvent
-        self.keyboard_notifier.add_listeners(self.player, self.slider, self.img_widget)
+        self.keyboard_notifier.add_listeners(self.player, self.slider, self.img_widget, self.info_detection)
 
         # Avoid keyboard not being triggered when focus on some widgets
         self.video_list_widget.setFocusPolicy(Qt.NoFocus)
@@ -87,6 +89,7 @@ class CentralWidget(QWidget, StateListener):
         control_layout.addWidget(self.player)
         control_layout.addWidget(self.ssh_login)
         control_layout.addWidget(self.theme_picker)
+        control_layout.addWidget(self.options)
         control_layout.addWidget(self.detection_manager)
         control_layout.addWidget(self.hungarian_button)
         control_layout.addWidget(self.tracking_manager)

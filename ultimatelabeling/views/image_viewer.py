@@ -197,7 +197,7 @@ class ImageWidget(QWidget, StateListener, KeyboardListener):
         self.state = state
         self.state.add_listener(self)
 
-        self.MIN_ZOOM, self.MAX_ZOOM = 0.9, 6.0
+        self.MIN_ZOOM, self.MAX_ZOOM = 0.9, 8.0
         self.zoom = 1.0
         self.offset = QPoint(0., 0.)
         self.original_img = None
@@ -258,8 +258,10 @@ class ImageWidget(QWidget, StateListener, KeyboardListener):
 
     def draw_bboxes(self, img):
         for detection in self.state.detections:
+            label = None if detection.class_id not in self.state.track_info.class_names else self.state.track_info.class_names[detection.class_id]
             draw_detection(img, detection, kps_show_bbox=self.state.keypoints_show_bbox,
-                           kps_instance_color=self.state.keypoints_instance_color, bbox_class_color=self.state.bbox_class_color)
+                           kps_instance_color=self.state.keypoints_instance_color, bbox_class_color=self.state.bbox_class_color,
+                           label=label)
 
     def draw_current_detection(self):
         if self.current_detection:

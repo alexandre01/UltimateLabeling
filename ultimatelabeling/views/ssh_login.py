@@ -1,8 +1,13 @@
+import os
+import paramiko
+from scp import SCPClient
+import time
+import json
+
 from PyQt5.QtWidgets import QGroupBox, QLabel, QLineEdit, QFormLayout, QPushButton, QMessageBox
 from PyQt5.QtCore import QThread, pyqtSignal
 from ultimatelabeling.models import StateListener, SSHCredentials
-import paramiko
-from scp import SCPClient
+from ultimatelabeling.config import OUTPUT_DIR, SERVER_DIR
 
 
 class SSHLogin(QGroupBox, StateListener):
@@ -59,20 +64,27 @@ class SSHLogin(QGroupBox, StateListener):
             sftp = self.ssh_client.open_sftp()
     
             try:
-                sftp.stat('GUI_server')  # Files already exist on the server
+                sftp.stat('UltimateLabeling_server')  # Files already exist on the server
             except IOError:  # We need to copy files to the server
                 QMessageBox.warning(self, "", "Code is missing on the server.")
+                return
 
         if self.ssh_client.get_transport():
             self.state.ssh_connected = True
-            QMessageBox.information(self, "", "Connected!")
 
-            self.start_tracking_server()
             self.start_detection_server()
+            self.start_tracking_server()
+
+            time.sleep(5)  # Let the server some time to start the socket servers
+
+            if self.check_is_running():
+                QMessageBox.information(self, "", "Connected!")
+            else:
+                QMessageBox.information(self, "", "An error occurred. Type `tmux ls` on the server.")
 
     def start_tracking_server(self):
         stdin, stdout, stderr = self.ssh_client.exec_command("tmux kill-session -t tracking")  # Killing possible previous socket server
-        stdin, stdout, stderr = self.ssh_client.exec_command('cd GUI_server && source siamMask/env/bin/activate && tmux new -d -s tracking "python -m tracker"')
+        stdin, stdout, stderr = self.ssh_client.exec_command('cd UltimateLabeling_server && source siamMask/env/bin/activate && tmux new -d -s tracking "CUDA_VISIBLE_DEVICES=0 python -m tracker"')
 
         print(stdout.read().decode())
         print(stderr.read().decode())
@@ -86,7 +98,7 @@ class SSHLogin(QGroupBox, StateListener):
 
     def start_detection_server(self):
         stdin, stdout, stderr = self.ssh_client.exec_command("tmux kill-session -t detection")  # Killing possible previous socket server
-        stdin, stdout, stderr = self.ssh_client.exec_command('cd GUI_server && source detection/env/bin/activate && tmux new -d -s detection "CUDA_VISIBLE_DEVICES=0 python -m detector"')
+        stdin, stdout, stderr = self.ssh_client.exec_command('cd UltimateLabeling_server && source detection/env/bin/activate && tmux new -d -s detection "CUDA_VISIBLE_DEVICES=0 python -m detector"')
 
         print(stdout.read().decode())
         print(stderr.read().decode())
@@ -98,6 +110,58 @@ class SSHLogin(QGroupBox, StateListener):
             self.state.detection_server_running = True
             print("Detection server started...")
 
+
+    def start_detached_detection(self, seq_path, crop_area=None, detector="YOLO"):
+        stdin, stdout, stderr = self.ssh_client.exec_command("tmux kill-session -t detached")  # Killing possible previous socket server
+        stdin, stdout, stderr = self.ssh_client.exec_command('cd UltimateLabeling_server && source detection/env/bin/activate && tmux new -d -s detached '
+                                                             '"CUDA_VISIBLE_DEVICES=1 python -m detector_detached -s {} -d {}"'.format(seq_path, detector))
+
+        print(stdout.read().decode())
+        print(stderr.read().decode())
+
+        errors = stderr.read().decode()
+        if errors:
+            QMessageBox.warning(self, "", errors)
+        else:
+            self.state.detection_detached_video_name = os.path.basename(seq_path)
+            print("Detached detection server started...")
+
+    def fetch_detached_info(self):
+        local_info_file = os.path.join(OUTPUT_DIR, "running_info.json")
+        server_info_file = os.path.join(SERVER_DIR, local_info_file)
+
+        try:
+            with SCPClient(self.ssh_client.get_transport()) as scp:
+                scp.get(server_info_file, local_info_file)
+        except IOError:
+            QMessageBox.warning(self, "", "Information file not found on the server.")
+            return
+
+        with open(local_info_file, "r") as f:
+            data = json.load(f)
+
+        return data
+
+    def load_detached_detections(self, video_name):
+        local_detections_file = os.path.join(OUTPUT_DIR, "{}.json".format(video_name))
+        server_info_file = os.path.join(SERVER_DIR, local_detections_file)
+
+        try:
+            with SCPClient(self.ssh_client.get_transport()) as scp:
+                scp.get(server_info_file, local_detections_file)
+        except IOError:
+            QMessageBox.warning(self, "", "Outputs not found on the server.")
+            return
+
+    def check_is_running(self):
+        stdin, stdout, stderr = self.ssh_client.exec_command("tmux ls")
+        tmux_out = stdout.read().decode()
+
+        if "detection" and "tracking" in tmux_out:
+            return True
+
+        return False
+
     def closeServers(self):
         if self.ssh_client.get_transport():
             print("closing servers")
@@ -106,6 +170,7 @@ class SSHLogin(QGroupBox, StateListener):
             stdin, stdout, stderr = self.ssh_client.exec_command("tmux kill-session -t detection")  # Killing possible previous socket server
             print(stdout, "+", stderr)
             print("servers closed")
+
 
 class SCPThread(QThread):
     countChanged = pyqtSignal(int)

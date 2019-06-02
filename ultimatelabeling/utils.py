@@ -18,16 +18,14 @@ def get_color(id):
     return tuple(map(int, np.random.choice(range(256), size=3)))
 
 
-def draw_detection(img, detection, draw_anchors=True, color=None, kps_show_bbox=False, kps_instance_color=False, bbox_class_color=False):
+def draw_detection(img, detection, draw_anchors=True, color=None, kps_show_bbox=False, kps_instance_color=False, bbox_class_color=False, label=None):
 
     if detection.keypoints:
-        draw_keypoints(img, detection.keypoints, object_id=detection.track_id if kps_instance_color else None)
-
         if not kps_show_bbox:
+            draw_keypoints(img, detection.keypoints, object_id=detection.track_id if kps_instance_color else None)
             return
         else:
             draw_anchors = False
-            bbox_class_color = False
 
     if detection.bbox:
         thickness = Bbox.get_thickness()
@@ -43,6 +41,25 @@ def draw_detection(img, detection, draw_anchors=True, color=None, kps_show_bbox=
 
         if draw_anchors:
             draw_bbox_anchors(img, bbox, color=color)
+
+        if label is not None:
+            draw_label(img, bbox, label, thickness, color)
+
+    if detection.keypoints:
+        draw_keypoints(img, detection.keypoints, object_id=detection.track_id if kps_instance_color else None)
+
+def draw_label(img, bbox, label, thickness, color, height=12):
+    b = bbox.pos.copy()
+    s = bbox.size.copy()
+    b -= thickness / 2, height
+    s[0] += thickness
+    s[1] = height
+    cv2.rectangle(img, tuple(b.astype(int)), tuple((b + s).astype(int)), color=color, thickness=-1)
+
+    b = bbox.pos.copy()
+    b[0] += 2 * thickness
+    cv2.putText(img, label, tuple(b.astype(int)), fontFace=cv2.FONT_HERSHEY_PLAIN,
+                fontScale=0.85, color=(255,255,255))
 
 
 def draw_bbox(img, bbox, color=(255, 0, 0), thickness=1, draw_anchors=True):

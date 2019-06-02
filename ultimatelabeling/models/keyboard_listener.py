@@ -3,6 +3,8 @@ from PyQt5.QtGui import QKeyEvent
 
 
 class KeyboardNotifier:
+    NUMBERS_KEYS = [Qt.Key_0, Qt.Key_1, Qt.Key_2, Qt.Key_3, Qt.Key_4, Qt.Key_5, Qt.Key_6, Qt.Key_7, Qt.Key_8, Qt.Key_9]
+
     def __init__(self):
         self.listeners = set()
 
@@ -21,6 +23,13 @@ class KeyboardNotifier:
 
         if event.key() == Qt.Key_Control:
             self.notify_listeners("on_key_ctrl", True)
+
+        if event.key() == Qt.Key_Delete:
+            print("delete")
+            self.notify_listeners("on_key_delete", True)
+
+        if event.key() in self.NUMBERS_KEYS:
+            self.notify_listeners("on_key_number", self.NUMBERS_KEYS.index(event.key()))
 
     def keyReleaseEvent(self, event):
           if event.key() == Qt.Key_Control:
@@ -49,4 +58,10 @@ class KeyboardListener:
         pass
 
     def on_key_right(self):
+        pass
+
+    def on_key_delete(self):
+        pass
+
+    def on_key_number(self, number):
         pass

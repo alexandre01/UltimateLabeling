@@ -32,9 +32,12 @@ class State:
         self.tracking_server_running = False
         self.detection_server_running = False
 
+        self.detection_detached_video_name = None
+
         self.keypoints_show_bbox = False
         self.keypoints_instance_color = False
         self.bbox_class_color = False
+        self.copy_annotations_option = False
 
         self.visible_area = (0, 0, 0, 0)
 
@@ -139,7 +142,8 @@ class State:
     def set_detections(self, detections, frame):
         self.track_info.detections[frame] = detections
 
-        self.track_info.nb_track_ids = max(self.track_info.nb_track_ids, max([d.track_id for d in detections]) + 1)
+        if len(detections) > 0:
+            self.track_info.nb_track_ids = max(self.track_info.nb_track_ids, max([d.track_id for d in detections]) + 1)
 
         if frame == self.current_frame:
             self.detections = self.track_info.detections[frame]
@@ -183,6 +187,8 @@ class State:
     def set_bbox_class_color(self, value):
         self.bbox_class_color = value
         self.notify_listeners("on_detection_change")
+    def set_copy_annotations_option(self, value):
+        self.copy_annotations_option = value
 
     def add_listener(self, listener):
         self.listeners.add(listener)

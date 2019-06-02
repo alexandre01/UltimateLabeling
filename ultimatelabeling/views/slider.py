@@ -2,7 +2,7 @@ import os
 from PyQt5.QtWidgets import QSlider, QWidget, QHBoxLayout, QLabel
 from PyQt5.QtCore import Qt
 from ultimatelabeling.models import StateListener, KeyboardListener, FrameMode
-from ultimatelabeling.config import ROOT_DIR
+from ultimatelabeling.config import RESOURCES_DIR
 
 
 class VideoSlider(QWidget, StateListener, KeyboardListener):
@@ -17,7 +17,7 @@ class VideoSlider(QWidget, StateListener, KeyboardListener):
         self.slider.setTickPosition(QSlider.TicksBothSides)
         self.slider.setTickInterval(5)
         self.slider.setSingleStep(1)
-        self.slider.setStyleSheet(open(os.path.join(ROOT_DIR, 'styles', 'slider.style')).read())
+        self.slider.setStyleSheet(open(os.path.join(RESOURCES_DIR, 'slider.style')).read())
         self.slider.valueChanged.connect(lambda: self.state.set_current_frame(self.slider.value(), frame_mode=FrameMode.MANUAL))
 
         self.label = QLabel()
@@ -47,4 +47,11 @@ class VideoSlider(QWidget, StateListener, KeyboardListener):
         self.state.decrease_current_frame(frame_mode=FrameMode.MANUAL)
 
     def on_key_right(self):
+        detections = self.state.track_info.detections[self.state.current_frame]
+        detections = [d.copy() for d in detections]
+
         self.state.increase_current_frame(frame_mode=FrameMode.MANUAL)
+
+        if self.state.copy_annotations_option:
+            self.state.set_detections(detections, self.state.current_frame)  # TODO: CAUTION, this overwrites current detections
+            self.state.notify_listeners("on_detection_change")
