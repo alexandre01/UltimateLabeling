@@ -64,41 +64,28 @@ class SocketTracker(Tracker):
     PORT = 8787
     TERMINATE_SIGNAL = b"terminate"
 
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        self.encode_param = [int(cv2.IMWRITE_JPEG_QUALITY), 90]
-        self.tracker = SiamMaskTracker()
+    def __init__(self, port=PORT):
+        self.port = port
 
-    def init(self, img, bbox):
+    def init(self, image_path, bbox):
         self.client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.client_socket.connect((self.HOST, self.PORT))
+        self.client_socket.connect((self.HOST, self.port))
         self.receive_ok_signal()
-
-        self.tracker.init(img, bbox)
 
         self.send_bbox(bbox)
-        self.send_frame(img)
+        self.send_image_path(image_path)
 
         self.receive_ok_signal()
 
-    def track(self, img):
-        img = get_image_crop(self.tracker.state, img)
-
-        self.send_frame(img)
+    def track(self, image_path):
+        self.send_image_path(image_path)
         data = self.receive_detection()
 
-        polygon = Polygon(data["polygon"])
-        bbox = Bbox(*data["bbox"])
+        return Bbox(*data["bbox"]), Polygon(data["polygon"])
 
-        self.tracker.state['target_pos'] = bbox.center
-        self.tracker.state['target_sz'] = bbox.size
-
-        return bbox, polygon
-
-    def send_frame(self, frame):
-        result, frame = cv2.imencode('.jpg', frame, self.encode_param)
-        data = pickle.dumps(frame)
-        self.client_socket.sendall(struct.pack(">L", len(data)) + data)
+    def send_image_path(self, image_path):
+        data = image_path.encode()
+        self.client_socket.sendall(data)
 
     def send_bbox(self, bbox):
         data = pickle.dumps(bbox.to_json())

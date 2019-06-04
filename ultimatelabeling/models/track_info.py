@@ -92,4 +92,4 @@ class TrackInfo:
 
     def save_to_disk(self):
         with open(os.path.join(OUTPUT_DIR, "{}.json".format(self.video_name)), "w") as f:
-            json.dump(self.to_json(), f, indent=4)
+            json.dump(self.to_json(), f)

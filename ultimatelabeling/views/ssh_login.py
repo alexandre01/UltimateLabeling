@@ -73,7 +73,7 @@ class SSHLogin(QGroupBox, StateListener):
             self.state.ssh_connected = True
 
             self.start_detection_server()
-            self.start_tracking_server()
+            self.start_tracking_servers()
 
             time.sleep(5)  # Let the server some time to start the socket servers
 
@@ -85,6 +85,31 @@ class SSHLogin(QGroupBox, StateListener):
     def start_tracking_server(self):
         stdin, stdout, stderr = self.ssh_client.exec_command("tmux kill-session -t tracking")  # Killing possible previous socket server
         stdin, stdout, stderr = self.ssh_client.exec_command('cd UltimateLabeling_server && source siamMask/env/bin/activate && tmux new -d -s tracking "CUDA_VISIBLE_DEVICES=0 python -m tracker"')
+
+        print(stdout.read().decode())
+        print(stderr.read().decode())
+
+        errors = stderr.read().decode()
+        if errors:
+            QMessageBox.warning(self, "", errors)
+        else:
+            self.state.tracking_server_running = True
+            print("Tracking server started...")
+
+    def start_tracking_servers(self):
+        # Killing possible previous socket server
+        stdin, stdout, stderr = self.ssh_client.exec_command("tmux kill-session -t tracking_1")
+        stdin, stdout, stderr = self.ssh_client.exec_command("tmux kill-session -t tracking_2")
+        stdin, stdout, stderr = self.ssh_client.exec_command("tmux kill-session -t tracking_3")
+
+        stdin, stdout, stderr = self.ssh_client.exec_command('cd UltimateLabeling_server && source siamMask/env/bin/activate && tmux new -d -s tracking_1 '
+                                                             '"CUDA_VISIBLE_DEVICES=0 python -m tracker -p 8787"')
+
+        stdin, stdout, stderr = self.ssh_client.exec_command('cd UltimateLabeling_server && source siamMask/env/bin/activate && tmux new -d -s tracking_2 '
+                                                             '"CUDA_VISIBLE_DEVICES=0 python -m tracker -p 8788"')
+
+        stdin, stdout, stderr = self.ssh_client.exec_command('cd UltimateLabeling_server && source siamMask/env/bin/activate && tmux new -d -s tracking_3 '
+                                                             '"CUDA_VISIBLE_DEVICES=0 python -m tracker -p 8789"')
 
         print(stdout.read().decode())
         print(stderr.read().decode())

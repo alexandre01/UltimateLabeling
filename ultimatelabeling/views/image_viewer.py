@@ -216,6 +216,9 @@ class ImageWidget(QWidget, StateListener, KeyboardListener):
         self.setFixedSize(900, 900)
         self.setMouseTracking(True)
 
+        self.current_frame = None
+        self.current_video = None
+
         self.on_current_frame_change()
 
     def get_visible_area(self):
@@ -234,12 +237,20 @@ class ImageWidget(QWidget, StateListener, KeyboardListener):
         return offset_x, offset_y, width, height
 
     def on_current_frame_change(self):
-        image_file = self.state.file_names[self.state.current_frame]
-        img = cv2.imread(image_file)
-        img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+        if self.current_frame != self.state.current_frame or self.current_video != self.state.current_video:
+            self.current_frame = self.state.current_frame
+            self.current_video = self.state.current_video
 
-        h, w, _ = img.shape
-        self.img_scale = float(self.width()) / float(w)
+            image_file = self.state.file_names[self.state.current_frame]
+            img = cv2.imread(image_file)
+            img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+
+            h, w, _ = img.shape
+            self.img_scale = float(self.width()) / float(w)
+            self.original_img = img.copy()
+        else:
+            img = self.original_img.copy()
+            h, w, _ = img.shape = img.shape
 
         self.anchors_quadtree = AnchorQuadTree(Bbox(0, 0, w, h))
         self.anchors_quadtree.build_quadtree(self.state.detections)
@@ -265,7 +276,7 @@ class ImageWidget(QWidget, StateListener, KeyboardListener):
 
     def draw_current_detection(self):
         if self.current_detection:
-            self.img = self.original_img.copy()
+            self.img = self.img_temp.copy()
             draw_detection(self.img, self.current_detection, draw_anchors=False,
                            kps_show_bbox=self.state.keypoints_show_bbox, kps_instance_color=self.state.keypoints_instance_color,
                            bbox_class_color=self.state.bbox_class_color)
@@ -274,7 +285,7 @@ class ImageWidget(QWidget, StateListener, KeyboardListener):
         self.on_current_frame_change()
 
     def draw_image(self, img):
-        self.original_img = img
+        self.img_temp = img
         self.img = img
 
         self.update_zoom_offset()
@@ -382,7 +393,6 @@ class ImageWidget(QWidget, StateListener, KeyboardListener):
         self.update_zoom_offset()
 
     def mouseMoveEvent(self, event):
-
         if event.buttons() == Qt.NoButton:
             pos = self.get_abs_pos(event.pos())
 
@@ -447,12 +457,6 @@ class ImageWidget(QWidget, StateListener, KeyboardListener):
             if self.current_event != Event.MOVING:
                 self.current_detection.bbox.correct_negative_size()
                 self.state.set_current_detection(self.current_detection)
-
-                """self.img = self.original_img.copy()
-                area = self.get_visible_area()
-                utils.draw_bbox(self.img, bbox=Bbox(*area), color=(255, 0, 0))
-                self.update_zoom_offset()
-                self.update()"""
 
             QApplication.restoreOverrideCursor()
             self.current_event = None

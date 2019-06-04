@@ -28,7 +28,7 @@ class Detector:
 
 class SocketDetector(Detector):
     HOST = "128.178.17.112"
-    PORT = 8788
+    PORT = 8786
     TERMINATE_SIGNAL = b"terminate"
 
     def init(self):

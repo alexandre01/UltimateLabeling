@@ -5,7 +5,7 @@ import time
 
 
 class PlayerThread(QThread):
-    FRAME_RATE = 30
+    FRAME_RATE = 10
 
     def __init__(self, state):
         super().__init__()

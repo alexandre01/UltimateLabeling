@@ -1,23 +1,20 @@
-from PyQt5.QtWidgets import QPushButton, QGroupBox, QHBoxLayout, QStyle, QPlainTextEdit, QMessageBox
+from PyQt5.QtWidgets import QPushButton, QGroupBox, QVBoxLayout, QHBoxLayout, QStyle, QPlainTextEdit, QMessageBox
 from PyQt5.QtCore import QThread, pyqtSignal
 from ultimatelabeling.models.tracker import SocketTracker
 from ultimatelabeling.models import Detection, FrameMode
-import cv2
+
+PORTS = [8787, 8788, 8789]
 
 
 class TrackingThread(QThread):
-    messageAdded = pyqtSignal(str)
-
-    def __init__(self, state):
+    def __init__(self, state, port):
         super().__init__()
 
         self.state = state
         self.runs = False
-        self.tracker = SocketTracker()  # SiamMaskTracker()
+        self.tracker = SocketTracker(port)
 
-    def get_image(self, frame):
-        image_file = self.state.file_names[frame]
-        return cv2.imread(image_file)
+        self.selected = False
 
     def run(self):
         self.runs = True
@@ -31,43 +28,42 @@ class TrackingThread(QThread):
         init_bbox = self.state.current_detection.bbox
 
         self.state.frame_mode = FrameMode.CONTROLLED
-        self.messageAdded.emit("Intializing tracker...")
-        self.tracker.init(self.get_image(init_frame), init_bbox)
-        self.messageAdded.emit("Tracker intialized!")
+        self.selected = True
+        self.tracker.init(self.state.file_names[init_frame], init_bbox)
 
         frame = init_frame + 1
 
         while frame < self.state.nb_frames and self.runs:
 
-            image_file = self.state.file_names[frame]
-            img = cv2.imread(image_file)
-            bbox, polygon = self.tracker.track(img)
+            image_path = self.state.file_names[frame]
+            bbox, polygon = self.tracker.track(image_path)
             detection = Detection(class_id=class_id, track_id=track_id, polygon=polygon, bbox=bbox)
 
             self.state.add_detection(detection, frame)
 
-            if self.state.frame_mode == FrameMode.CONTROLLED or self.state.current_frame == frame:
+            if (self.state.frame_mode == FrameMode.CONTROLLED and self.selected) or self.state.current_frame == frame:
                 self.state.set_current_frame(frame)
 
             frame += 1
 
         self.tracker.terminate()
-        self.messageAdded.emit("Tracker terminated.")
 
     def stop(self):
         self.runs = False
 
 
-class TrackingManager(QGroupBox):
-    def __init__(self, state):
-        super().__init__("Tracking")
-        self.state = state
+class TrackingButtons(QGroupBox):
+    def __init__(self, state, parent, i):
+        super().__init__("Tracker {}".format(i+1))
 
-        self.thread = TrackingThread(self.state)
-        self.thread.messageAdded.connect(self.add_message)
+        self.state = state
+        self.parent = parent
+        self.i = i
+
+        self.thread = TrackingThread(self.state, port=PORTS[i])
         self.thread.finished.connect(self.on_finished_tracking)
 
-        layout = QHBoxLayout()
+        layout = QVBoxLayout()
 
         self.start_button = QPushButton("Start")
         self.start_button.setIcon(self.style().standardIcon(QStyle.SP_DialogYesButton))
@@ -77,14 +73,12 @@ class TrackingManager(QGroupBox):
         self.stop_button.setIcon(self.style().standardIcon(QStyle.SP_DialogNoButton))
         self.stop_button.clicked.connect(self.on_stop_tracking)
 
-        self.textArea = QPlainTextEdit()
-        self.textArea.resize(400, 200)
+        self.sync_button = QPushButton("Sync")
+        self.sync_button.clicked.connect(self.on_sync)
 
         layout.addWidget(self.start_button)
         layout.addWidget(self.stop_button)
-        layout.addStretch()
-        layout.addWidget(self.textArea)
-
+        layout.addWidget(self.sync_button)
         self.setLayout(layout)
 
         self.stop_button.hide()
@@ -96,6 +90,7 @@ class TrackingManager(QGroupBox):
 
         if not self.thread.isRunning():
             self.thread.start()
+            self.parent.select(self.i)
 
             self.start_button.hide()
             self.stop_button.show()
@@ -104,8 +99,9 @@ class TrackingManager(QGroupBox):
         if self.thread.isRunning():
             self.thread.stop()
 
-    def add_message(self, message):
-        self.textArea.insertPlainText(message + "\n")
+    def on_sync(self):
+        self.state.frame_mode = FrameMode.CONTROLLED
+        self.parent.select(self.i)
 
     def on_finished_tracking(self):
         if self.thread.isRunning():
@@ -114,3 +110,22 @@ class TrackingManager(QGroupBox):
         self.state.frame_mode = FrameMode.MANUAL
         self.stop_button.hide()
         self.start_button.show()
+
+
+class TrackingManager(QGroupBox):
+    def __init__(self, state):
+        super().__init__("Tracking")
+        self.state = state
+
+        self.trackers = [TrackingButtons(self.state, self, i) for i in range(3)]
+
+        layout = QHBoxLayout()
+
+        for tracker in self.trackers:
+            layout.addWidget(tracker)
+
+        self.setLayout(layout)
+
+    def select(self, selected_i):
+        for i, tracker in enumerate(self.trackers):
+            tracker.thread.selected = i == selected_i

@@ -28,6 +28,9 @@ class State:
         self.current_detection = None
         self.frame_mode = FrameMode.MANUAL
 
+        self.loading_frame = None
+        self.loaded_frame = None
+
         self.ssh_connected = False
         self.tracking_server_running = False
         self.detection_server_running = False
@@ -131,10 +134,7 @@ class State:
 
     def add_detection(self, detection, frame):
         self.track_info.detections[frame].append(detection)
-
-        print("d", detection.track_id)
         self.track_info.nb_track_ids = max(self.track_info.nb_track_ids, detection.track_id + 1)
-        print("n", self.track_info.nb_track_ids)
 
         if frame == self.current_frame:
             self.current_detection = detection

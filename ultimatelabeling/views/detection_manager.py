@@ -96,11 +96,15 @@ class DetectionManager(QGroupBox):
 
         info = self.ssh_login.fetch_detached_info()
 
-        message = "Video: {}\nFrame: {}/{}\nLast update: {}".format(info["video_name"], info["current_frame"], info["total_frame"], info["last_update"])
+        message = "Video: {}\nFrame: {}/{}\nStart time: {}\nLast update: {}".format(info["video_name"], info["current_frame"], info["total_frame"], info["start_time"], info["last_update"])
         QMessageBox.information(self, "", message)
 
     def _is_detached_running(self):
         info = self.ssh_login.fetch_detached_info()
+
+        if not info:
+            return False
+
         last_update = datetime.datetime.strptime(info["last_update"], "%Y-%m-%d %H:%M:%S.%f")
         now = datetime.datetime.now()
 
