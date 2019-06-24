@@ -27,3 +27,7 @@ def dark_palette():
 def light_palette():
     w = QWidget()
     return w.style().standardPalette()
+
+
+light_image_bg = (255, 255, 255)
+dark_image_bg = (38, 38, 38)

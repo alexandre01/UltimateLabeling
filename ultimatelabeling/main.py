@@ -1,11 +1,9 @@
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import Qt
+from PyQt5 import QtCore, QtGui
 from .views import *
 from .models import State, StateListener, KeyboardNotifier
 from .styles import Theme
-
-
-app = QApplication([])
 
 
 class MainWindow(QMainWindow):
@@ -15,12 +13,41 @@ class MainWindow(QMainWindow):
         self.setWindowTitle("UltimateLabeler")
 
         self.central_widget = CentralWidget()
-
         self.central_widget.setFocusPolicy(Qt.StrongFocus)
         self.setFocusProxy(self.central_widget)
         self.central_widget.setFocus(True)
 
+        self.statusBar()
+
+        mainMenu = self.menuBar()
+
+        fileMenu = mainMenu.addMenu('&File')
+        toolsMenu = mainMenu.addMenu('&Tools')
+        helpMenu = mainMenu.addMenu('&Help')
+
+        close = QAction('Close window', self)
+        close.setShortcut('Ctrl+W')
+        close.triggered.connect(self.close)
+        fileMenu.addAction(close)
+
+        save = QAction('Save', self)
+        save.setShortcut('Ctrl+S')
+        # save.triggered.connect()
+        fileMenu.addAction(save)
+
+        help = QAction('Documentation', self)
+        help.triggered.connect(self.open_url)
+        helpMenu.addAction(help)
+
         self.setCentralWidget(self.central_widget)
+
+        self.show()
+        self.center()
+
+    def open_url(self):
+        url = QtCore.QUrl('https://github.com/alexandre01/UltimateLabeling')
+        if not QtGui.QDesktopServices.openUrl(url):
+            QtGui.QMessageBox.warning(self, 'Open Url', 'Could not open url')
 
     def center(self):
         qr = self.frameGeometry()
@@ -106,10 +133,9 @@ class CentralWidget(QWidget, StateListener):
         app.setPalette(Theme.get_palette(self.state.theme))
 
 
-main_window = MainWindow()
-main_window.show()
-main_window.center()
-
-app.exec()
+if __name__ == '__main__':
+    app = QApplication([])
+    main_window = MainWindow()
+    app.exec()
 
 

@@ -7,6 +7,7 @@ from ultimatelabeling.utils import draw_detection
 from ultimatelabeling.models import KeyboardListener
 from ultimatelabeling.models.polygon import Bbox
 from ultimatelabeling.models.track_info import Detection
+from ultimatelabeling.styles import Theme
 import numpy as np
 from ultimatelabeling import utils
 
@@ -267,6 +268,9 @@ class ImageWidget(QWidget, StateListener, KeyboardListener):
     def on_detection_change(self):
         self.on_current_frame_change()
 
+    def on_theme_change(self):
+        self.update_zoom_offset()
+
     def draw_bboxes(self, img):
         for detection in self.state.detections:
             label = None if detection.class_id not in self.state.track_info.class_names else self.state.track_info.class_names[detection.class_id]
@@ -293,7 +297,7 @@ class ImageWidget(QWidget, StateListener, KeyboardListener):
     def update_zoom_offset(self):
         M = np.float32([[self.zoom * self.img_scale, 0, self.offset.x()],
                         [0, self.zoom * self.img_scale, self.offset.y()]])
-        self.canvas = cv2.warpAffine(self.img, M, (900, 900), borderValue=(38, 38, 38))
+        self.canvas = cv2.warpAffine(self.img, M, (900, 900), borderValue=Theme.get_image_bg(self.state.theme))
 
         self.state.visible_area = self.get_visible_area()
 

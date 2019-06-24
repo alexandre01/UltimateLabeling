@@ -1,4 +1,4 @@
-from .palettes import dark_palette, light_palette
+from .palettes import dark_palette, light_palette, dark_image_bg, light_image_bg
 
 
 class Theme:
@@ -12,4 +12,13 @@ class Theme:
         elif theme == Theme.LIGHT:
             return light_palette()
 
-        raise ValueError("No palette named {}".format(theme))
+        raise ValueError("No theme named {}".format(theme))
+
+    @staticmethod
+    def get_image_bg(theme):
+        if theme == Theme.DARK:
+            return dark_image_bg
+        elif theme == Theme.LIGHT:
+            return light_image_bg
+
+        raise ValueError("No theme named {}".format(theme))
