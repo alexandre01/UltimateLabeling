@@ -1,6 +1,6 @@
 import cv2
 from PyQt5.QtWidgets import QWidget, QApplication
-from PyQt5.QtCore import QPoint, Qt
+from PyQt5.QtCore import QPoint, Qt, QThread
 from PyQt5.QtGui import QImage, QPainter
 from ultimatelabeling.models import StateListener
 from ultimatelabeling.utils import draw_detection
@@ -238,6 +238,9 @@ class ImageWidget(QWidget, StateListener, KeyboardListener):
         return offset_x, offset_y, width, height
 
     def on_current_frame_change(self):
+
+        self.state.drawing = True
+
         if self.current_frame != self.state.current_frame or self.current_video != self.state.current_video:
             self.current_frame = self.state.current_frame
             self.current_video = self.state.current_video
@@ -312,6 +315,8 @@ class ImageWidget(QWidget, StateListener, KeyboardListener):
             img = QImage(self.canvas.data, width, height, bpl, QImage.Format_RGB888)
             qp.drawImage(QPoint(0, 0), img)
         qp.end()
+
+        self.state.drawing = False
 
     def get_abs_pos(self, pos):
         return (pos - self.offset) / (self.zoom * self.img_scale)

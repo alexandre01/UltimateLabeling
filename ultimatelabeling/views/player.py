@@ -1,11 +1,13 @@
-from PyQt5.QtWidgets import QHBoxLayout, QPushButton, QGroupBox, QStyle
-from PyQt5.QtCore import QThread
+from PyQt5.QtWidgets import QHBoxLayout, QPushButton, QGroupBox, QStyle, qApp
+from PyQt5.QtCore import QThread, pyqtSignal, pyqtSlot
 from ultimatelabeling.models import KeyboardListener, FrameMode
 import time
 
 
 class PlayerThread(QThread):
-    FRAME_RATE = 10
+    FRAME_RATE = 30
+
+    signal = pyqtSignal()
 
     def __init__(self, state):
         super().__init__()
@@ -14,7 +16,9 @@ class PlayerThread(QThread):
 
     def run(self):
         while self.state.current_frame < self.state.nb_frames - 1 and self.state.frame_mode == FrameMode.CONTROLLED:
-            self.state.increase_current_frame()
+            if not self.state.drawing:
+                self.signal.emit()
+
             time.sleep(1 / self.FRAME_RATE)
 
         # TODO: auto pause when finished
@@ -27,6 +31,7 @@ class PlayerWidget(QGroupBox, KeyboardListener):
         self.state = state
 
         self.thread = PlayerThread(self.state)
+        self.thread.signal.connect(self.increase_frame)
 
         layout = QHBoxLayout()
 
@@ -54,6 +59,10 @@ class PlayerWidget(QGroupBox, KeyboardListener):
         self.setLayout(layout)
 
         self.pause_button.hide()
+
+    @pyqtSlot()
+    def increase_frame(self):
+        self.state.increase_current_frame()
 
     def on_play_clicked(self):
         if not self.thread.isRunning():

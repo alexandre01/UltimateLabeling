@@ -35,6 +35,58 @@ class Detection:
                                                                                  self.bbox, self.polygon, self.keypoints)
 
 
+class TrackInfo2:
+    def __init__(self, video_name=""):
+        self.video_name = video_name
+
+        self.nb_track_ids = 0
+        self.class_names = DEFAULT_CLASS_NAMES
+        self.load_info()
+
+        self.detections = []
+
+    def load_info(self):
+        json_file = os.path.join(OUTPUT_DIR, "{}/info.json".format(self.video_name))
+
+        if not os.path.exists(json_file):
+            return
+
+        with open(json_file, "r") as f:
+            data = json.load(f)
+            self.nb_track_ids = data["nb_track_ids"]
+            self.class_names = {int(k): v for k, v in json.loads(data["class_names"]).items()}
+
+    def load_detections(self, file_name):
+        json_file = os.path.join(OUTPUT_DIR, "{}/{}.json".format(self.video_name, file_name))
+
+        with open(json_file, "r") as f:
+            data = json.load(f)
+            self.detections = [Detection.from_json(detection) for detection in data["detections"]]
+
+    def write_info(self):
+        json_file = os.path.join(OUTPUT_DIR, "{}/info.json".format(self.video_name))
+
+        data = {
+            "video_name": self.video_name,
+            "nb_track_ids": self.nb_track_ids,
+            "class_names": json.dumps(self.class_names)
+        }
+
+        with open(json_file, "w") as f:
+            json.dump(data, f)
+
+    def write_detections(self, file_name):
+        json_file = os.path.join(OUTPUT_DIR, "{}/{}.json".format(self.video_name, file_name))
+
+        data = {
+            "file_name": file_name,
+            "detections": [d.to_json() for d in self.detections]
+        }
+
+        with open(json_file, "w") as f:
+            json.dump(data, f)
+
+
 class TrackInfo:
     def __init__(self, video_name="", file_names=[]):
         self.video_name = video_name

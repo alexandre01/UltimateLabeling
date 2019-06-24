@@ -2,6 +2,7 @@ import pickle
 import os
 import glob
 import re
+from PyQt5.QtCore import QThread, QMutex
 from ultimatelabeling.styles import Theme
 from .ssh_credentials import SSHCredentials
 from .track_info import TrackInfo
@@ -43,8 +44,10 @@ class State:
         self.copy_annotations_option = False
 
         self.visible_area = (0, 0, 0, 0)
+        self.drawing = False
 
         self.listeners = set()
+        self.mutex = QMutex()
 
     def find_videos(self):
         print(DATA_DIR)
@@ -70,7 +73,8 @@ class State:
 
     def save_state(self):
         with open(STATE_PATH, 'wb') as f:
-            state_dict = {k: v for k, v in self.__dict__.items() if k != "listeners" and k != "track_info"}
+            state_dict = {k: v for k, v in self.__dict__.items() if k not in ["listeners", "track_info", "mutex",
+                                                                              "drawing"]}
             pickle.dump(state_dict, f)
 
     def load_state(self):
