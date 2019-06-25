@@ -7,6 +7,8 @@ PORTS = [8787, 8788, 8789]
 
 
 class TrackingThread(QThread):
+    err_signal = pyqtSignal(str)
+
     def __init__(self, state, port):
         super().__init__()
 
@@ -29,14 +31,24 @@ class TrackingThread(QThread):
 
         self.state.frame_mode = FrameMode.CONTROLLED
         self.selected = True
-        self.tracker.init(self.state.file_names[init_frame], init_bbox)
+
+        try:
+            self.tracker.init(self.state.file_names[init_frame], init_bbox)
+        except Exception as e:
+            self.err_signal.emit(str(e))
+            return
 
         frame = init_frame + 1
 
         while frame < self.state.nb_frames and self.runs:
 
             image_path = self.state.file_names[frame]
-            bbox, polygon = self.tracker.track(image_path)
+            try:
+                bbox, polygon = self.tracker.track(image_path)
+            except Exception as e:
+                self.err_signal.emit(str(e))
+                return
+
             detection = Detection(class_id=class_id, track_id=track_id, polygon=polygon, bbox=bbox)
 
             self.state.add_detection(detection, frame)
@@ -61,6 +73,7 @@ class TrackingButtons(QGroupBox):
         self.i = i
 
         self.thread = TrackingThread(self.state, port=PORTS[i])
+        self.thread.err_signal.connect(self.display_err_message)
         self.thread.finished.connect(self.on_finished_tracking)
 
         layout = QVBoxLayout()
@@ -82,6 +95,9 @@ class TrackingButtons(QGroupBox):
         self.setLayout(layout)
 
         self.stop_button.hide()
+
+    def display_err_message(self, err_message):
+        QMessageBox.warning(self, "", "Error: {}".format(err_message))
 
     def on_start_tracking(self):
         if not self.state.tracking_server_running:

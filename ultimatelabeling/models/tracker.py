@@ -62,7 +62,7 @@ class SiamMaskTracker(Tracker):
 class SocketTracker(Tracker):
     HOST = "128.178.17.112"
     PORT = 8787
-    TERMINATE_SIGNAL = b"terminate"
+    OK_SIGNAL, TERMINATE_SIGNAL = b"ok", b"terminate"
 
     def __init__(self, port=PORT):
         self.port = port
@@ -75,11 +75,16 @@ class SocketTracker(Tracker):
         self.send_bbox(bbox)
         self.send_image_path(image_path)
 
-        self.receive_ok_signal()
+        res = self.receive_ok_signal()
+        if res != self.OK_SIGNAL:
+            raise Exception(res.decode())
 
     def track(self, image_path):
         self.send_image_path(image_path)
         data = self.receive_detection()
+
+        if "error" in data:
+            raise Exception(data["error"])
 
         return Bbox(*data["bbox"]), Polygon(data["polygon"])
 
@@ -97,7 +102,8 @@ class SocketTracker(Tracker):
         return response
 
     def receive_ok_signal(self):
-        self.client_socket.recv(1024)
+        data = self.client_socket.recv(1024)
+        return data
 
     def send_terminate_signal(self):
         self.client_socket.sendall(self.TERMINATE_SIGNAL)

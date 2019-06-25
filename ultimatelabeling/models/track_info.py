@@ -35,15 +35,24 @@ class Detection:
                                                                                  self.bbox, self.polygon, self.keypoints)
 
 
-class TrackInfo2:
+class TrackInfo:
     def __init__(self, video_name=""):
         self.video_name = video_name
+
+        dir_name = os.path.join(OUTPUT_DIR, self.video_name)
+        if not os.path.exists(dir_name):
+            os.makedirs(dir_name)
 
         self.nb_track_ids = 0
         self.class_names = DEFAULT_CLASS_NAMES
         self.load_info()
 
+        self.file_name = None
         self.detections = []
+
+    def save_to_disk(self):
+        self.write_info()
+        self.write_detections(self.file_name)
 
     def load_info(self):
         json_file = os.path.join(OUTPUT_DIR, "{}/info.json".format(self.video_name))
@@ -56,12 +65,18 @@ class TrackInfo2:
             self.nb_track_ids = data["nb_track_ids"]
             self.class_names = {int(k): v for k, v in json.loads(data["class_names"]).items()}
 
-    def load_detections(self, file_name):
-        json_file = os.path.join(OUTPUT_DIR, "{}/{}.json".format(self.video_name, file_name))
+    def get_detections(self, file_name):
+        txt_file = os.path.join(OUTPUT_DIR, "{}/{}.txt".format(self.video_name, file_name))
 
-        with open(json_file, "r") as f:
-            data = json.load(f)
-            self.detections = [Detection.from_json(detection) for detection in data["detections"]]
+        if not os.path.exists(txt_file):
+            return []
+
+        with open(txt_file, "r") as f:
+            return [Detection.from_json(json.loads(detection.rstrip('\n'))) for detection in f]
+
+    def load_detections(self, file_name):
+        self.file_name = file_name
+        self.detections = self.get_detections(file_name)
 
     def write_info(self):
         json_file = os.path.join(OUTPUT_DIR, "{}/info.json".format(self.video_name))
@@ -75,73 +90,65 @@ class TrackInfo2:
         with open(json_file, "w") as f:
             json.dump(data, f)
 
-    def write_detections(self, file_name):
-        json_file = os.path.join(OUTPUT_DIR, "{}/{}.json".format(self.video_name, file_name))
+    def write_detections(self, file_name, detections=None):
+        txt_file = os.path.join(OUTPUT_DIR, "{}/{}.txt".format(self.video_name, file_name))
 
-        data = {
-            "file_name": file_name,
-            "detections": [d.to_json() for d in self.detections]
-        }
+        if detections is None:
+            detections = self.detections
 
-        with open(json_file, "w") as f:
-            json.dump(data, f)
+        with open(txt_file, "w") as f:
+            for d in detections:
+                f.write("{}\n".format(json.dumps(d.to_json())))
 
+        self.nb_track_ids = max(self.nb_track_ids, max([d.track_id for d in detections] or [0]) + 1)
 
-class TrackInfo:
-    def __init__(self, video_name="", file_names=[]):
-        self.video_name = video_name
-        self.file_names = file_names
-        self.nb_frames = len(file_names)
+    def add_detection(self, detection, file_name=None):
+        if file_name is None or file_name == self.file_name:
+            self.detections.append(detection)
+        else:
+            txt_file = os.path.join(OUTPUT_DIR, "{}/{}.txt".format(self.video_name, file_name))
 
-        self.nb_track_ids = 0
+            with open(txt_file, "w") as f:
+                f.write("{}\n".format(json.dumps(detection.to_json())))
 
-        self.class_names = DEFAULT_CLASS_NAMES
-        self.detections = [[] for _ in range(self.nb_frames)]
+        self.nb_track_ids = max(self.nb_track_ids, detection.track_id + 1)
 
-        self.load_from_disk()
+    def remove_detection(self, track_id, file_name):
+        """
+        Removes detections with specific track_id from detections file
+        Returns true if at least one detection was deleted
+        """
+        if file_name == self.file_name:
+            self.detections = [d for d in self.detections if d.track_id != track_id]
+            return True
 
-    def load_from_disk(self):
-        file_name = os.path.join(OUTPUT_DIR, "{}.json".format(self.video_name))
+        txt_file = os.path.join(OUTPUT_DIR, "{}/{}.txt".format(self.video_name, file_name))
 
-        if not os.path.exists(file_name):
-            return
+        if not os.path.exists(txt_file):
+            return False
 
-        with open(file_name, "r") as f:
-            data = json.load(f)
-            self.nb_track_ids = data["nb_track_ids"]
-            self._load_class_names(data)
-            self.detections = [[Detection.from_json(detection) for detection in frame["detections"]] for frame in data["frames"]]
+        counter = 0
+        with open(txt_file, "r+") as f:
+            detections = f.readlines()
+            f.seek(0)
+            for d in detections:
+                if json.loads(d.rstrip('\n'))["track_id"] != track_id:
+                    f.write(d)
+                else:
+                    counter += 1
+            f.truncate()
 
-    def _load_class_names(self, data):
-        if "class_names" not in data:
-            self.class_names = DEFAULT_CLASS_NAMES
+        return counter > 0
 
-        self.class_names = {int(k): v for k, v in json.loads(data["class_names"]).items()}
+    def get_min_available_track_id(self, file_name=None):
+        if file_name is None or file_name == self.file_name:  # current_frame
+            track_ids = set([d.track_id for d in self.detections])
+        else:
+            track_ids = set([d.track_id for d in self.get_detections(file_name)])
 
-    def to_json(self):
-        return {
-            "video_name": self.video_name,
-            "nb_track_ids": self.nb_track_ids,
-            "class_names": json.dumps(self.class_names),
-            "frames": [
-                {
-                    "frame_id": i,
-                    "file_name": self.file_names[i],
-                    "detections": [d.to_json() for d in detections]
-                }
-                for i, detections in enumerate(self.detections)
-            ]
-        }
-
-    def get_min_available_track_id(self, frame):
-        track_ids = set([d.track_id for d in self.detections[frame]])
         N = len(track_ids)
         missing_track_ids = set(range(N)) - track_ids
         if missing_track_ids:
             return min(missing_track_ids)
         else:
             return N+1
-
-    def save_to_disk(self):
-        with open(os.path.join(OUTPUT_DIR, "{}.json".format(self.video_name)), "w") as f:
-            json.dump(self.to_json(), f)

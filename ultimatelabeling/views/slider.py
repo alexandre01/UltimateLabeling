@@ -47,8 +47,7 @@ class VideoSlider(QWidget, StateListener, KeyboardListener):
         self.state.decrease_current_frame(frame_mode=FrameMode.MANUAL)
 
     def on_key_right(self):
-        detections = self.state.track_info.detections[self.state.current_frame]
-        detections = [d.copy() for d in detections]
+        detections = [d.copy() for d in self.state.track_info.detections]
 
         self.state.increase_current_frame(frame_mode=FrameMode.MANUAL)
 

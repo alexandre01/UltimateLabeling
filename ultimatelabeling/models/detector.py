@@ -29,7 +29,7 @@ class Detector:
 class SocketDetector(Detector):
     HOST = "128.178.17.112"
     PORT = 8786
-    TERMINATE_SIGNAL = b"terminate"
+    OK_SIGNAL, TERMINATE_SIGNAL = b"ok", b"terminate"
 
     def init(self):
         self.client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -44,7 +44,6 @@ class SocketDetector(Detector):
             "crop_area": crop_area.to_json() if crop_area else None
         }
         self.send_options(options)
-
         detections = self.receive_detections()
 
         return detections
@@ -83,11 +82,16 @@ class SocketDetector(Detector):
     def receive_detections(self):
         json_response = utils.recv_data(self.client_socket)
         response = json.loads(json_response.decode())
+
+        if "error" in response:
+            raise Exception(response["error"])
+
         detections = [Detection.from_json(d) for d in response]
         return detections
 
     def receive_ok_signal(self):
-        self.client_socket.recv(1024)
+        data = self.client_socket.recv(1024)
+        return data
 
     def send_terminate_signal(self):
         self.client_socket.sendall(self.TERMINATE_SIGNAL)

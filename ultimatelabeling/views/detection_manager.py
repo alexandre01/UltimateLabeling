@@ -1,7 +1,7 @@
 import os
 import datetime
 from PyQt5.QtWidgets import QGroupBox, QHBoxLayout, QPushButton, QMessageBox, QCheckBox, QComboBox, QFormLayout, QLabel, QVBoxLayout
-from PyQt5.QtCore import QThread
+from PyQt5.QtCore import QThread, pyqtSignal
 from ultimatelabeling.models import FrameMode, TrackInfo
 from ultimatelabeling.models.detector import SocketDetector
 from ultimatelabeling.models.polygon import Bbox
@@ -37,9 +37,11 @@ class DetectionManager(QGroupBox):
         options_layout.addRow(QLabel("Detection net:"), self.detector_dropdown)
 
         self.frame_detection_thread = DetectionThread(self.state, self.detector, self, detect_video=False)
+        self.frame_detection_thread.err_signal.connect(self.display_err_message)
         self.frame_detection_thread.finished.connect(self.on_detection_finished)
 
         self.detection_thread = DetectionThread(self.state, self.detector, self, detect_video=True)
+        self.detection_thread.err_signal.connect(self.display_err_message)
         self.detection_thread.finished.connect(self.on_detection_finished)
 
         run_layout = QHBoxLayout()
@@ -56,6 +58,9 @@ class DetectionManager(QGroupBox):
         layout.addLayout(options_layout)
         layout.addLayout(run_layout)
         self.setLayout(layout)
+
+    def display_err_message(self, err_message):
+        QMessageBox.warning(self, "", "Error: {}".format(err_message))
 
     def on_frame_detection_clicked(self):
         if not self.state.detection_server_running:
@@ -117,13 +122,14 @@ class DetectionManager(QGroupBox):
 
         self.ssh_login.load_detached_detections(self.state.current_video)  # TODO: WARNING this will overwrite current annotations
 
-        self.state.track_info = TrackInfo(self.state.current_video, self.state.file_names)
-        self.state.detections = self.state.track_info.detections[self.state.current_frame]
+        self.state.track_info = TrackInfo(self.state.current_video)
+        self.state.track_info.load_detections(self.state.get_file_name())
 
         self.state.notify_listeners("on_detection_change")
 
 
 class DetectionThread(QThread):
+    err_signal = pyqtSignal(str)
 
     def __init__(self, state, detector, parent, detect_video=True):
         super().__init__()
@@ -150,13 +156,16 @@ class DetectionThread(QThread):
 
                 self.state.frame_mode = FrameMode.CONTROLLED
 
-                for frame, detections in enumerate(self.detector.detect_sequence(seq_path, self.state.nb_frames, crop_area=crop_area, detector=detector)):
-                    self.state.set_detections(detections, frame)
+                try:
+                    for frame, detections in enumerate(self.detector.detect_sequence(seq_path, self.state.nb_frames, crop_area=crop_area, detector=detector)):
+                        self.state.set_detections(detections, frame)
 
-                    if self.state.frame_mode == FrameMode.CONTROLLED or self.state.current_frame == frame:
-                        self.state.set_current_frame(frame)
+                        if self.state.frame_mode == FrameMode.CONTROLLED or self.state.current_frame == frame:
+                            self.state.set_current_frame(frame)
+                except Exception as e:
+                    self.err_signal.emit(str(e))
+                    self.detector.terminate()
 
-                self.detector.terminate()
                 self.state.frame_mode = FrameMode.MANUAL
 
             else:
@@ -166,8 +175,11 @@ class DetectionThread(QThread):
         else:
             image_path = self.state.file_names[self.state.current_frame]
 
-            detections = self.detector.detect(image_path, crop_area=crop_area, detector=detector)
-            self.state.set_detections(detections, self.state.current_frame)
-            self.state.set_current_frame(self.state.current_frame)
+            try:
+                detections = self.detector.detect(image_path, crop_area=crop_area, detector=detector)
+                self.state.set_detections(detections, self.state.current_frame)
+                self.state.set_current_frame(self.state.current_frame)
 
-            self.detector.terminate()
+                self.detector.terminate()
+            except Exception as e:
+                self.err_signal.emit(str(e))

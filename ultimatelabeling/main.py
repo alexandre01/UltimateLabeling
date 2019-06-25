@@ -92,6 +92,9 @@ class CentralWidget(QWidget, StateListener):
         self.video_list_widget.setFocusPolicy(Qt.NoFocus)
         self.slider.setFocusPolicy(Qt.NoFocus)
 
+        # Image widget thread signal, update function should always be called from main thread
+        self.img_widget.signal.connect(self.img_widget.update)
+
         self.make_layout()
         self.on_theme_change()
 

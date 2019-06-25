@@ -1,6 +1,6 @@
 import cv2
 from PyQt5.QtWidgets import QWidget, QApplication
-from PyQt5.QtCore import QPoint, Qt, QThread
+from PyQt5.QtCore import QPoint, Qt, QThread, pyqtSignal
 from PyQt5.QtGui import QImage, QPainter
 from ultimatelabeling.models import StateListener
 from ultimatelabeling.utils import draw_detection
@@ -192,6 +192,8 @@ class DetectionQuadTree:
 
 
 class ImageWidget(QWidget, StateListener, KeyboardListener):
+    signal = pyqtSignal()
+
     def __init__(self, state):
         super().__init__()
 
@@ -257,13 +259,13 @@ class ImageWidget(QWidget, StateListener, KeyboardListener):
             h, w, _ = img.shape = img.shape
 
         self.anchors_quadtree = AnchorQuadTree(Bbox(0, 0, w, h))
-        self.anchors_quadtree.build_quadtree(self.state.detections)
+        self.anchors_quadtree.build_quadtree(self.state.track_info.detections)
 
         self.detections_quadtree = DetectionQuadTree(Bbox(0, 0, w, h))
-        self.detections_quadtree.build_quadtree(self.state.detections)
+        self.detections_quadtree.build_quadtree(self.state.track_info.detections)
 
         self.keypoints_quadtree = KeypointQuadTree(Bbox(0, 0, w, h))
-        self.keypoints_quadtree.build_quadtree(self.state.detections)
+        self.keypoints_quadtree.build_quadtree(self.state.track_info.detections)
 
         self.draw_bboxes(img)
         self.draw_image(img)
@@ -275,7 +277,7 @@ class ImageWidget(QWidget, StateListener, KeyboardListener):
         self.update_zoom_offset()
 
     def draw_bboxes(self, img):
-        for detection in self.state.detections:
+        for detection in self.state.track_info.detections:
             label = None if detection.class_id not in self.state.track_info.class_names else self.state.track_info.class_names[detection.class_id]
             draw_detection(img, detection, kps_show_bbox=self.state.keypoints_show_bbox,
                            kps_instance_color=self.state.keypoints_instance_color, bbox_class_color=self.state.bbox_class_color,
@@ -304,7 +306,8 @@ class ImageWidget(QWidget, StateListener, KeyboardListener):
 
         self.state.visible_area = self.get_visible_area()
 
-        self.update()
+        self.signal.emit()
+        # self.update()
 
     def paintEvent(self, event):
         qp = QPainter()
@@ -348,7 +351,7 @@ class ImageWidget(QWidget, StateListener, KeyboardListener):
             if anchor:
                 self.current_event = Event.RESIZING
                 self.current_anchor_key = anchor.anchor_key
-                self.current_detection = self.state.detections[anchor.detection_index].copy()
+                self.current_detection = self.state.track_info.detections[anchor.detection_index].copy()
                 self.state.remove_detection(detection_index=anchor.detection_index)
 
                 if anchor.anchor_key[0] == "M":
@@ -371,7 +374,7 @@ class ImageWidget(QWidget, StateListener, KeyboardListener):
                 self.current_event = Event.KEYPOINT_DRAGGING
                 QApplication.setOverrideCursor(Qt.ClosedHandCursor)
                 self.current_anchor_key = keypoint.anchor_key
-                self.current_detection = self.state.detections[keypoint.detection_index].copy()
+                self.current_detection = self.state.track_info.detections[keypoint.detection_index].copy()
                 self.state.remove_detection(detection_index=keypoint.detection_index)
 
                 i = self.current_anchor_key
@@ -381,7 +384,7 @@ class ImageWidget(QWidget, StateListener, KeyboardListener):
             else:
                 if self.holding_ctrl:
                     self.current_event = Event.DRAWING
-                    track_id = self.state.track_info.get_min_available_track_id(self.state.current_frame)
+                    track_id = self.state.track_info.get_min_available_track_id()
                     self.current_detection = Detection(track_id=track_id, bbox=Bbox(pos.x(), pos.y(), 0, 0))
 
                     self.on_current_frame_change()

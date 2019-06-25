@@ -25,7 +25,6 @@ class State:
         self.theme = Theme.DARK
         self.ssh_credentials = SSHCredentials()
         self.track_info = TrackInfo()
-        self.detections = []
         self.current_detection = None
         self.frame_mode = FrameMode.MANUAL
 
@@ -48,6 +47,14 @@ class State:
 
         self.listeners = set()
         self.mutex = QMutex()
+
+    def get_file_name(self, frame=None):
+        if frame is None:
+            frame = self.current_frame
+
+        file_path = self.file_names[frame]
+        base = os.path.basename(file_path)
+        return os.path.splitext(base)[0]
 
     def find_videos(self):
         print(DATA_DIR)
@@ -95,8 +102,8 @@ class State:
             self.current_frame = 0
 
         self.update_file_names()
-        self.track_info = TrackInfo(self.current_video, self.file_names)
-        self.detections = self.track_info.detections[self.current_frame]
+        self.track_info = TrackInfo(self.current_video)
+        self.track_info.load_detections(self.get_file_name())
         self.frame_mode = FrameMode.MANUAL
 
     def set_current_frame(self, current_frame, frame_mode=None):
@@ -105,7 +112,8 @@ class State:
         if frame_mode is not None:
             self.frame_mode = frame_mode
 
-        self.detections = self.track_info.detections[self.current_frame]
+        self.track_info.save_to_disk()
+        self.track_info.load_detections(self.get_file_name())
 
         self.notify_listeners("on_current_frame_change")
 
@@ -124,8 +132,8 @@ class State:
             self.current_video = video_name
             self.update_file_names()
             self.current_frame = 0
-            self.track_info = TrackInfo(self.current_video, self.file_names)
-            self.detections = self.track_info.detections[self.current_frame]
+            self.track_info = TrackInfo(self.current_video)
+            self.track_info.load_detections(self.get_file_name())
             self.current_detection = None
             self.frame_mode = FrameMode.MANUAL
 
@@ -137,48 +145,37 @@ class State:
             self.notify_listeners("on_theme_change")
 
     def add_detection(self, detection, frame):
-        self.track_info.detections[frame].append(detection)
-        self.track_info.nb_track_ids = max(self.track_info.nb_track_ids, detection.track_id + 1)
+        self.track_info.add_detection(detection, self.get_file_name(frame))
 
         if frame == self.current_frame:
             self.current_detection = detection
 
     def set_detections(self, detections, frame):
-        self.track_info.detections[frame] = detections
-
-        if len(detections) > 0:
-            self.track_info.nb_track_ids = max(self.track_info.nb_track_ids, max([d.track_id for d in detections]) + 1)
-
-        if frame == self.current_frame:
-            self.detections = self.track_info.detections[frame]
+        self.track_info.write_detections(self.get_file_name(frame), detections)
 
     def remove_detection(self, detection_index=None, detection=None):
         if detection_index is not None:
-            self.detections.pop(detection_index)
+            self.track_info.detections.pop(detection_index)
         elif detection is not None:
-            self.detections.remove(detection)
+            self.track_info.detections.remove(detection)
 
         self.notify_listeners("on_detection_change")
     
     def remove_detection_and_future(self, detection_index=None, detection=None):
         if detection_index is not None:
-            detection = self.detections[detection_index]
+            detection = self.track_info.detections[detection_index]
 
         track_id = detection.track_id
         
         for i in range(self.current_frame, self.nb_frames):
-            detections = self.track_info.detections[i]
-            n = len(detections)
-            for j in range(n-1, -1, -1):
-                if detections[j].track_id == track_id:
-                    detections.pop(j)
+            if not self.track_info.remove_detection(track_id, self.get_file_name(i)):
+                break
 
         self.notify_listeners("on_detection_change")
     
     def set_current_detection(self, detection):
         self.current_detection = detection
-        self.detections.append(self.current_detection)
-        self.track_info.nb_track_ids = max(self.track_info.nb_track_ids, detection.track_id + 1)
+        self.track_info.add_detection(self.current_detection)
 
         self.notify_listeners("on_detection_change")
 
