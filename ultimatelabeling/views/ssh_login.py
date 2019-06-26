@@ -1,6 +1,6 @@
 import os
 import paramiko
-from scp import SCPClient
+from scp import SCPClient, SCPException
 import time
 import json
 
@@ -158,8 +158,7 @@ class SSHLogin(QGroupBox, StateListener):
         try:
             with SCPClient(self.ssh_client.get_transport()) as scp:
                 scp.get(server_info_file, local_info_file)
-        except IOError:
-            QMessageBox.warning(self, "", "Information file not found on the server.")
+        except SCPException:
             return
 
         with open(local_info_file, "r") as f:
@@ -168,13 +167,13 @@ class SSHLogin(QGroupBox, StateListener):
         return data
 
     def load_detached_detections(self, video_name):
-        local_detections_file = os.path.join(OUTPUT_DIR, "{}.json".format(video_name))
-        server_info_file = os.path.join(SERVER_DIR, local_detections_file)
+        local_detections_folder = os.path.join(OUTPUT_DIR, video_name)
+        server_detections_folder = os.path.join(SERVER_DIR, local_detections_folder)
 
         try:
             with SCPClient(self.ssh_client.get_transport()) as scp:
-                scp.get(server_info_file, local_detections_file)
-        except IOError:
+                scp.get(server_detections_folder, local_detections_folder, recursive=True)
+        except SCPException:
             QMessageBox.warning(self, "", "Outputs not found on the server.")
             return
 

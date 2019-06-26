@@ -30,10 +30,10 @@ class MainWindow(QMainWindow):
         close.triggered.connect(self.close)
         fileMenu.addAction(close)
 
-        save = QAction('Save', self)
+        """save = QAction('Save', self)
         save.setShortcut('Ctrl+S')
-        # save.triggered.connect()
-        fileMenu.addAction(save)
+        save.triggered.connect()
+        fileMenu.addAction(save)"""
 
         help = QAction('Documentation', self)
         help.triggered.connect(self.open_url)

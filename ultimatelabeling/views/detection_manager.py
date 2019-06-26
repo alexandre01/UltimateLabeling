@@ -100,6 +100,13 @@ class DetectionManager(QGroupBox):
             return
 
         info = self.ssh_login.fetch_detached_info()
+        if info is None:
+            QMessageBox.warning(self, "", "Information file not found on the server.")
+            return
+
+        if "error" in info:
+            QMessageBox.warning(self, "", "An error occurred in the detached session: {}".format(info["error"]))
+            return
 
         message = "Video: {}\nFrame: {}/{}\nStart time: {}\nLast update: {}".format(info["video_name"], info["current_frame"], info["total_frame"], info["start_time"], info["last_update"])
         QMessageBox.information(self, "", message)
