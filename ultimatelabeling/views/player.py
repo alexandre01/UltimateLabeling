@@ -5,7 +5,7 @@ import time
 
 
 class PlayerThread(QThread):
-    FRAME_RATE = 30
+    FRAME_RATE = 20
 
     def __init__(self, state):
         super().__init__()
@@ -19,8 +19,6 @@ class PlayerThread(QThread):
 
             time.sleep(1 / self.FRAME_RATE)
 
-        # TODO: auto pause when finished
-
 
 class PlayerWidget(QGroupBox, KeyboardListener):
     def __init__(self, state):
@@ -29,6 +27,7 @@ class PlayerWidget(QGroupBox, KeyboardListener):
         self.state = state
 
         self.thread = PlayerThread(self.state)
+        self.thread.finished.connect(self.on_player_finished)
 
         layout = QHBoxLayout()
 
@@ -57,8 +56,16 @@ class PlayerWidget(QGroupBox, KeyboardListener):
 
         self.pause_button.hide()
 
+    def on_player_finished(self):
+        self.pause_button.hide()
+        self.play_button.show()
+
     def on_play_clicked(self):
         if not self.thread.isRunning():
+
+            if self.state.current_frame == self.state.nb_frames - 1:
+                self.on_skip_backward_clicked()
+
             self.state.frame_mode = FrameMode.CONTROLLED
             self.thread.start()
 
@@ -68,7 +75,7 @@ class PlayerWidget(QGroupBox, KeyboardListener):
     def on_pause_clicked(self):
         if self.thread.isRunning():
             self.state.frame_mode = FrameMode.MANUAL
-            self.thread.terminate()
+            self.thread.wait()
 
             self.pause_button.hide()
             self.play_button.show()

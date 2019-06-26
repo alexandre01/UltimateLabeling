@@ -70,9 +70,11 @@ class CentralWidget(QWidget, StateListener):
         self.state.load_state()
         self.state.add_listener(self)
 
+        self.keyboard_notifier = KeyboardNotifier()
+
         self.video_list_widget = VideoListWidget(self.state)
         self.img_widget = ImageWidget(self.state)
-        self.slider = VideoSlider(self.state)
+        self.slider = VideoSlider(self.state, self.keyboard_notifier)
         self.player = PlayerWidget(self.state)
         self.theme_picker = ThemePicker(self.state)
         self.options = Options(self.state)
@@ -83,7 +85,6 @@ class CentralWidget(QWidget, StateListener):
         self.hungarian_button = HungarianManager(self.state)
         self.info_detection = InfoDetection(self.state)
 
-        self.keyboard_notifier = KeyboardNotifier()
         self.keyPressEvent = self.keyboard_notifier.keyPressEvent
         self.keyReleaseEvent = self.keyboard_notifier.keyReleaseEvent
         self.keyboard_notifier.add_listeners(self.player, self.slider, self.img_widget, self.info_detection)
@@ -91,6 +92,7 @@ class CentralWidget(QWidget, StateListener):
         # Avoid keyboard not being triggered when focus on some widgets
         self.video_list_widget.setFocusPolicy(Qt.NoFocus)
         self.slider.setFocusPolicy(Qt.NoFocus)
+        self.setFocusPolicy(Qt.StrongFocus)
 
         # Image widget thread signal, update function should always be called from main thread
         self.img_widget.signal.connect(self.img_widget.update)
