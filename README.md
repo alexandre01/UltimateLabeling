@@ -20,7 +20,7 @@ For remote server processing, follow the guide below in order to configure the [
 ## TODO list
 - [x] Load/write tracking info in seperate files for better performance on large videos
 - [x] Fix lag problems of the player
-- [ ] Add interpolation to the Hungarian assignment algorithm
+- [x] Complete the Hungarian assignment algorithm
 - [ ] Add super-resolution feature
 
 

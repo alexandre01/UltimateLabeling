@@ -1,9 +1,24 @@
 import pandas as pd
 import numpy as np
+import glob
+import sys
+import os
 import math
+import argparse
 from scipy.spatial import distance
 from scipy.optimize import linear_sum_assignment
+import pdb
 
+
+#
+# Use hungarian algorithm to track the vehicles
+# Read from {scene}_all.txt and output to {scene}_tracked_all.txt
+# Input format: "frame",'cls_no', 'xc', 'yc', 'w', 'h'
+# Output format: "frame",'cls_no', "id", 'xc', 'yc', 'w', 'h', 'infer'
+#
+
+def get_bbox_position(arr, dtype=float):
+    return dtype(arr[0] + arr[2] / 2), dtype(arr[1] + arr[3])
 
 
 def merge_trajectories(df, joint_distance):
@@ -26,7 +41,6 @@ def merge_trajectories(df, joint_distance):
             if dist < joint_distance:
                 wrong_list.append((idx, idx_n))
                 wrong_idxs.append(idx)
-                print("id:{}, id_n{}".format(idx, idx_n))
 
     # Trace the linkages among the wrong trajectories
     # Eg. 11 <- 34 , 34 <- 44, Both 34 and 44 need to be assign to 11.
@@ -44,7 +58,6 @@ def merge_trajectories(df, joint_distance):
                     correct_dict[w_idx].append(wn_idx)
                 reassigned.append(wn_idx)
                 pre_w_idx = wn_idx
-    print(correct_dict)
 
     # Assign wrong id to correct one
     for k, idx_list in correct_dict.items():
@@ -67,8 +80,7 @@ def major_vote_for_class(df):
     return df
 
 
-def linear_interpolation(track_info):
-
+def linear_interpolation(df):
     def box_close_to_edge(pre_row, img_w, img_h, offset):
         pre_xc = pre_row.xc.values[0]
         pre_yc = pre_row.yc.values[0]
@@ -81,10 +93,6 @@ def linear_interpolation(track_info):
         return x_s <= offset and x_e >= (img_w - offset) and y_s <= offset and y_e >= (img_h - offset)
 
     grouped_id = df.groupby('id')
-
-    id_list = []
-
-
     for idx, df_f in grouped_id:
         total_frames = df_f['frame'].max() - df_f['frame'].min() + 1
         if len(df_f) != total_frames:
@@ -113,35 +121,33 @@ def linear_interpolation(track_info):
                                            "infer": 1})
                             df = df.append(s, ignore_index=True)
                 pre = f
-
     return df.sort_values(by=['frame'])
 
 
-def track(track_info, max_distance = 100, max_frame = 20, joint_distance = 20):
+def track(df, max_distance = 100, max_frame=20, joint_distance=20, class_infer=True, linear_infer=True):
     """
     Args:
-        track_info (TrackInfo)
+        df
         max_distance: Max distance between consecutive bounding boxes
         max_frame:  Max frame to track bounding box
         joint_distance:  Merge path if two distinct path are close enough
     """
 
     # initialize label for time t=0
-    Y = [[i for i in range(len(track_info.detections[0]))]]
-    buf = []
+    Y = [[i for i in range(len(df[df["frame"] == 0]))]]
 
-    for t in range(0, track_info.nb_frames-1):
+    buf = []
+    for t in range(0, int(df["frame"].max())):
 
         # get the bounding boxes at time t and t+1
-        # x1 is t
-        # x2 is t+1
-
-        x1 = np.array([d.bbox.center for d in track_info.detections[t]])
-        x2 = np.array([d.bbox.center for d in track_info.detections[t+1]])
+        # x1 is t, x2 is t+1
+        x1 = df[df["frame"] == t][["xc", "yc"]].values
+        x2 = df[df["frame"] == t + 1][["xc", "yc"]].values
+        x1 = np.array([(bbox[0], bbox[1]) for bbox in x1])
+        x2 = np.array([(bbox[0], bbox[1]) for bbox in x2])
 
         # append Y for time t+1
-        Y.append([-1 for _ in range(len(track_info.detections[t+1]))])
-
+        Y.append([-1 for i in range(np.shape(x2)[0])])
         # append items in buffer to x1 (coordinates)
         x1_buf = list(x1)
         for b in buf:
@@ -151,20 +157,16 @@ def track(track_info, max_distance = 100, max_frame = 20, joint_distance = 20):
         # - compute the distances between all vehicles at time t (and in the buffer) to time t+1
         # - then compute the optimal assignment
         # *** only compute assignments if x2 is not empty
-        row_index = []
-        col_index = []
+        row_index, col_index = [], []
 
-        if np.shape(x2)[0] != 0:
+        if (np.shape(x2)[0] != 0):
             # compute the optimal assignments between x1 and x2 first
-            row_index_priority = []
-            col_index_priority = []
-            row_assigned = []
-            col_assigned = []
+            row_index_priority, col_index_priority = [], []
+            row_assigned, col_assigned = [], []
 
             if np.shape(x1)[0] != 0:
                 distances_priority = distance.cdist(x1, x2, 'euclidean')
                 row_index_priority, col_index_priority = linear_sum_assignment(distances_priority)
-
                 for r, c in zip(row_index_priority, col_index_priority):
                     # assign labels from time t to t+1
                     if distances_priority[r][c] < max_distance:
@@ -176,13 +178,11 @@ def track(track_info, max_distance = 100, max_frame = 20, joint_distance = 20):
             # set the distances between the previously matched objects to a very small number to force them to match again
             if np.shape(x1_buf)[0] != 0:
                 distances = distance.cdist(x1_buf, x2, 'euclidean')
-
                 for r, c in zip(row_assigned, col_assigned):
                     distances[r][c] = -999999
 
                 row_index, col_index = linear_sum_assignment(distances)
                 rm = []
-
                 for r, c in zip(row_index, col_index):
                     # assign labels from time t to t+1
                     # if(r < np.shape(x1)[0]):
@@ -190,7 +190,6 @@ def track(track_info, max_distance = 100, max_frame = 20, joint_distance = 20):
                     #        Y[-1][c] = Y[-2][r]
                     # assign labels from buffer to t+1
                     # then remove them
-
                     if r >= np.shape(x1)[0]:
                         if distances[r][c] < max_distance:
                             buf_ind = r - np.shape(x1)[0]
@@ -200,7 +199,7 @@ def track(track_info, max_distance = 100, max_frame = 20, joint_distance = 20):
                 # remove items from buffer that were assigned
                 buf_temp = []
                 for i, b in enumerate(buf):
-                    if (i not in rm):
+                    if i not in rm:
                         buf_temp.append(b)
                 buf = buf_temp.copy()
 
@@ -217,7 +216,6 @@ def track(track_info, max_distance = 100, max_frame = 20, joint_distance = 20):
         # these are (most probably) newly found objects
         for i in range(len(Y[-1])):
             if Y[-1][i] == -1:
-                # print(np.amax([y for yy in Y for y in yy]))
                 Y[-1][i] = np.amax([y for yy in Y for y in yy]) + 1
 
         # increment timestamps
@@ -236,32 +234,22 @@ def track(track_info, max_distance = 100, max_frame = 20, joint_distance = 20):
         buf = buf_temp.copy()
 
     # rewrite ground truth with label
-    total_nb_track_ids = 0
-
     print("Assigning labels....")
     for t, y in enumerate(Y):
-        nb_track_ids = len(y)
-        total_nb_track_ids = max(total_nb_track_ids, nb_track_ids)
-        for i in range(nb_track_ids):
-            track_info.detections[t][i].track_id = int(y[i])
+        df.loc[df["frame"] == t, "id"] = y
 
-    track_info.nb_track_ids = total_nb_track_ids
-
-    """
     print("Merge wrongly separeted trajectories....")
-    df = merge_trajectories(track_info, joint_distance)
+    df = merge_trajectories(df, joint_distance)
 
     # Enhance the result
     # Use major vote to unify the class of an id
-    if opt.class_infer:
+    if class_infer:
         print("Inferring the class in in a trajectory.....")
         df = major_vote_for_class(df)
-    
+
     # Do linear interpolation to fill up the missing bounding box
-    print("Doing linear interpolation in a trajectory.....")
-    linear_interpolation(track_info)
-    """
+    if linear_infer:
+        print("Doing linear interpolation in a trajectory.....")
+        df = linear_interpolation(df)
 
-    return track_info
-
-
+    return df

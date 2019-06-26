@@ -32,6 +32,10 @@ class Bbox:
         return np.concatenate([self.pos, self.pos + self.size])
 
     @property
+    def xcycwh(self):
+        return np.concatenate([self.center, self.size])
+
+    @property
     def center(self):
         return self.pos + self.size / 2
 

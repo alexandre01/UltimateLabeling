@@ -1,5 +1,7 @@
 import json
 import os
+import pandas as pd
+import numpy as np
 from .polygon import Polygon, Bbox, Keypoints
 from ultimatelabeling.class_names import DEFAULT_CLASS_NAMES
 from ultimatelabeling.config import OUTPUT_DIR
@@ -65,6 +67,42 @@ class TrackInfo:
             self.nb_track_ids = data["nb_track_ids"]
             self.class_names = {int(k): v for k, v in json.loads(data["class_names"]).items()}
 
+    def to_df(self, file_names):
+        df = pd.DataFrame(columns=["frame", 'cls_no', "id", 'xc', 'yc', 'w', 'h', 'infer'])
+
+        for i, file_name in enumerate(file_names):
+            txt_file = os.path.join(OUTPUT_DIR, "{}/{}.txt".format(self.video_name, file_name))
+
+            with open(txt_file, "r") as f:
+                for d in f:
+                    detection = json.loads(d.rstrip('\n'))
+                    bbox = Bbox(*detection["bbox"]).xcycwh
+                    df = df.append({"frame": i, "cls_no": detection["class_id"], "id": detection["track_id"],
+                                    "xc": bbox[0], "yc": bbox[1], "w": bbox[2], "h": bbox[3], "infer": 0}, ignore_index=True)
+        return df
+
+    def from_df(self, df, file_names):
+
+        for i, file_name in enumerate(file_names):
+            detections = df[df.frame == i]
+
+            txt_file = os.path.join(OUTPUT_DIR, "{}/{}.txt".format(self.video_name, file_name))
+            with open(txt_file, "w") as f:
+                for index, row in detections.iterrows():
+                    # TODO: doing this we loose polgon, keypoints info
+
+                    center, size = np.array([row["xc"], row["yc"]], dtype=float), np.array([row["w"], row["h"]], dtype=float)
+                    bbox = Bbox.from_center_size(center, size)
+
+                    d = Detection(class_id=int(row["cls_no"]), track_id=int(row["id"]),
+                                  bbox=bbox)
+                    f.write("{}\n".format(json.dumps(d.to_json())))
+
+        # TODO: update nb_track_ids?
+
+        # Update current detections
+        self.detections = self.get_detections(self.file_name)
+
     def get_detections(self, file_name):
         txt_file = os.path.join(OUTPUT_DIR, "{}/{}.txt".format(self.video_name, file_name))
 
@@ -95,6 +133,9 @@ class TrackInfo:
 
         if detections is None:
             detections = self.detections
+
+        if file_name == self.file_name:
+            self.detections = detections
 
         with open(txt_file, "w") as f:
             for d in detections:

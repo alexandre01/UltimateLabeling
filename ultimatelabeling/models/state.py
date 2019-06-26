@@ -56,6 +56,10 @@ class State:
         base = os.path.basename(file_path)
         return os.path.splitext(base)[0]
 
+    def get_file_names(self):
+        for frame in range(self.nb_frames):
+            yield self.get_file_name(frame)
+
     def find_videos(self):
         print(DATA_DIR)
         return next(os.walk(DATA_DIR))[1]
@@ -152,6 +156,9 @@ class State:
 
     def set_detections(self, detections, frame):
         self.track_info.write_detections(self.get_file_name(frame), detections)
+
+        if frame == self.current_frame:
+            self.notify_listeners("on_detection_change")
 
     def remove_detection(self, detection_index=None, detection=None):
         if detection_index is not None:
