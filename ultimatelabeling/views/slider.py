@@ -58,8 +58,10 @@ class VideoSlider(QWidget, StateListener, KeyboardListener):
 
         self.state.decrease_current_frame(frame_mode=FrameMode.MANUAL)
 
-        if self.state.copy_annotations_backwards_option:
-            self.state.set_current_detection(current_detection)
+        if self.state.copy_annotations_option:
+            track_ids = [d.track_id for d in self.state.track_info.detections]
+            if current_detection.track_id not in track_ids:
+                self.state.set_current_detection(current_detection)
 
     def on_key_right(self):
         current_detection = self.state.current_detection.copy()
@@ -67,4 +69,6 @@ class VideoSlider(QWidget, StateListener, KeyboardListener):
         self.state.increase_current_frame(frame_mode=FrameMode.MANUAL)
 
         if self.state.copy_annotations_option:
-            self.state.set_current_detection(current_detection)
+            track_ids = [d.track_id for d in self.state.track_info.detections]
+            if current_detection.track_id not in track_ids:
+                self.state.set_current_detection(current_detection)

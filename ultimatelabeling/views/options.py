@@ -11,15 +11,10 @@ class Options(QGroupBox, StateListener):
         self.state = state
         state.add_listener(self)
 
-        self.copy_backwards_option_checkbox = QCheckBox("Copy annotations (⇨)")
-        self.copy_backwards_option_checkbox.setCheckState(Qt.Checked if self.state.copy_annotations_backwards_option else Qt.Unchecked)
-        self.copy_backwards_option_checkbox.stateChanged.connect(lambda state: self.state.set_copy_annotations_backwards_option(state == Qt.Checked))
-
-        self.copy_option_checkbox = QCheckBox("Copy annotations (⇨)")
+        self.copy_option_checkbox = QCheckBox("Copy annotations (⇦ ⇨)")
         self.copy_option_checkbox.setCheckState(Qt.Checked if self.state.copy_annotations_option else Qt.Unchecked)
         self.copy_option_checkbox.stateChanged.connect(lambda state: self.state.set_copy_annotations_option(state == Qt.Checked))
 
         layout = QHBoxLayout()
-        layout.addWidget(self.copy_backwards_option_checkbox)
         layout.addWidget(self.copy_option_checkbox)
         self.setLayout(layout)

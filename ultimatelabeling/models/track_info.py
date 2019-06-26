@@ -181,18 +181,8 @@ class TrackInfo:
 
         return counter > 0
 
-    def get_min_available_track_id(self, file_name=None):
-        if file_name is None or file_name == self.file_name:  # current_frame
-            track_ids = set([d.track_id for d in self.detections])
-        else:
-            track_ids = set([d.track_id for d in self.get_detections(file_name)])
-
-        N = len(track_ids)
-        missing_track_ids = set(range(N)) - track_ids
-        if missing_track_ids:
-            return min(missing_track_ids)
-        else:
-            return N+1
+    def get_min_available_track_id(self):
+        return self.nb_track_ids
 
     def modify_class_id(self, track_id, class_id, file_name):
         """

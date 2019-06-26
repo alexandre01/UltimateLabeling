@@ -41,7 +41,6 @@ class State:
         self.keypoints_instance_color = False
         self.bbox_class_color = False
         self.copy_annotations_option = False
-        self.copy_annotations_backwards_option = False
 
         self.visible_area = (0, 0, 0, 0)
         self.drawing = False
@@ -98,6 +97,8 @@ class State:
         self.ssh_connected = False
         self.tracking_server_running = False
         self.detection_server_running = False
+
+        self.copy_annotations_option = False
 
         self.video_list = self.find_videos()
         self.check_raw_videos()
@@ -207,8 +208,6 @@ class State:
         self.notify_listeners("on_detection_change")
     def set_copy_annotations_option(self, value):
         self.copy_annotations_option = value
-    def set_copy_annotations_backwards_option(self, value):
-        self.copy_annotations_backwards_option = value
 
     def add_listener(self, listener):
         self.listeners.add(listener)
