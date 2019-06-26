@@ -6,6 +6,4 @@ build/
 .eggs/
 __pycache__
 dist/
-
-data/
 output/

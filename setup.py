@@ -37,6 +37,8 @@ setup(
         'torch',
         'pillow',
         'matplotlib'
+        'pandas',
+        'scipy'
     ],
     extras_require={
             'test': [

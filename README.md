@@ -43,6 +43,15 @@ For remote server processing, follow the guide below in order to configure the [
 
 ## Installation
 
+```
+git clone https://github.com/alexandre01/UltimateLabeling.git
+cd UltimateLabeling
+virtualenv --no-site-packages venv
+source venv/bin/activate
+
+```
+
+
 Install the requirements using `pip` as follows:
 
 ```

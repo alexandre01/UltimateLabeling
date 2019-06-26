@@ -8,3 +8,5 @@ tqdm
 torch
 pillow
 matplotlib
+pandas
+scipy
