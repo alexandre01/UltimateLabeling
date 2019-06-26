@@ -54,7 +54,12 @@ class VideoSlider(QWidget, StateListener, KeyboardListener):
         self.slider.setMaximum(self.state.nb_frames - 1)
 
     def on_key_left(self):
+        current_detection = self.state.current_detection.copy()
+
         self.state.decrease_current_frame(frame_mode=FrameMode.MANUAL)
+
+        if self.state.copy_annotations_backwards_option:
+            self.state.set_current_detection(current_detection)
 
     def on_key_right(self):
         current_detection = self.state.current_detection.copy()

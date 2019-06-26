@@ -41,6 +41,7 @@ class State:
         self.keypoints_instance_color = False
         self.bbox_class_color = False
         self.copy_annotations_option = False
+        self.copy_annotations_backwards_option = False
 
         self.visible_area = (0, 0, 0, 0)
         self.drawing = False
@@ -179,6 +180,15 @@ class State:
                 break
 
         self.notify_listeners("on_detection_change")
+
+    def modify_class_id_and_future(self, detection, class_id):
+        track_id = detection.track_id
+
+        for i in range(self.current_frame, self.nb_frames):
+            if not self.track_info.modify_class_id(track_id, class_id, self.get_file_name(i)):
+                break
+
+        self.notify_listeners("on_detection_change")
     
     def set_current_detection(self, detection):
         self.current_detection = detection
@@ -197,6 +207,8 @@ class State:
         self.notify_listeners("on_detection_change")
     def set_copy_annotations_option(self, value):
         self.copy_annotations_option = value
+    def set_copy_annotations_backwards_option(self, value):
+        self.copy_annotations_backwards_option = value
 
     def add_listener(self, listener):
         self.listeners.add(listener)

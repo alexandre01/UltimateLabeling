@@ -123,7 +123,7 @@ class SSHLogin(QGroupBox, StateListener):
 
     def start_detection_server(self):
         stdin, stdout, stderr = self.ssh_client.exec_command("tmux kill-session -t detection")  # Killing possible previous socket server
-        stdin, stdout, stderr = self.ssh_client.exec_command('cd UltimateLabeling_server && source detection/env/bin/activate && tmux new -d -s detection "CUDA_VISIBLE_DEVICES=1 python -m detector"')
+        stdin, stdout, stderr = self.ssh_client.exec_command('cd UltimateLabeling_server && source detection/env/bin/activate && tmux new -d -s detection "CUDA_VISIBLE_DEVICES=0 python -m detector"')
 
         print(stdout.read().decode())
         print(stderr.read().decode())
@@ -139,7 +139,7 @@ class SSHLogin(QGroupBox, StateListener):
     def start_detached_detection(self, seq_path, crop_area=None, detector="YOLO"):
         stdin, stdout, stderr = self.ssh_client.exec_command("tmux kill-session -t detached")  # Killing possible previous socket server
         stdin, stdout, stderr = self.ssh_client.exec_command('cd UltimateLabeling_server && source detection/env/bin/activate && tmux new -d -s detached '
-                                                             '"CUDA_VISIBLE_DEVICES=1 python -m detector_detached -s {} -d {}"'.format(seq_path, detector))
+                                                             '"CUDA_VISIBLE_DEVICES=0 python -m detector_detached -s {} -d {}"'.format(seq_path, detector))
 
         print(stdout.read().decode())
         print(stderr.read().decode())

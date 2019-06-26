@@ -43,7 +43,7 @@ For remote server processing, follow the guide below in order to configure the [
 
 ## Installation
 
-```
+```bash
 git clone https://github.com/alexandre01/UltimateLabeling.git
 cd UltimateLabeling
 virtualenv --no-site-packages venv
@@ -54,13 +54,13 @@ pip install -r requirements.txt
 
 Install the requirements using `pip` as follows:
 
-```
+```bash
 pip install -r requirements
 ```
 
 Put the videos (folder of images or video file, the frames will be extracted automatically) inside the `data` folder. Then, open the GUI using 
 
-```sh
+```bash
 python -m ultimatelabeling.main
 ```
 
@@ -70,7 +70,7 @@ After closing the window, the annotations are available in the `output` folder.
 ## Remote server configuration
 To configure the remote GPU server, follow the steps below:
 
-```sh
+```bash
 git clone https://github.com/alexandre01/UltimateLabeling_server.git
 cd UltimateLabeling_server
 pip install -r requirements.txt
@@ -82,7 +82,7 @@ The data images and videos should be placed in the folder `data`, similarly to t
 
 To extract video files, use the following script:
 
-```sh
+```bash
 bash extract.sh data/video_file.mp4
 ```
 

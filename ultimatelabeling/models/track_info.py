@@ -193,3 +193,36 @@ class TrackInfo:
             return min(missing_track_ids)
         else:
             return N+1
+
+    def modify_class_id(self, track_id, class_id, file_name):
+        """
+        Modifies class id with specific track_id from detections file
+        Returns true if at least one modification was done
+        """
+
+        if file_name == self.file_name:
+            for d in self.detections:
+                if d.track_id == track_id:
+                    d.class_id = class_id
+            return True
+
+        txt_file = os.path.join(OUTPUT_DIR, "{}/{}.txt".format(self.video_name, file_name))
+
+        if not os.path.exists(txt_file):
+            return False
+
+        counter = 0
+        with open(txt_file, "r+") as f:
+            detections = f.readlines()
+            f.seek(0)
+            for d in detections:
+                d_json = json.loads(d.rstrip('\n'))
+                if d_json["track_id"] != track_id:
+                    f.write(d)
+                else:
+                    d_json["class_id"] = class_id
+                    f.write("{}\n".format(json.dumps(d_json)))
+                    counter += 1
+            f.truncate()
+
+        return counter > 0

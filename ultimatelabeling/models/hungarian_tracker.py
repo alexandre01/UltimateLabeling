@@ -247,6 +247,8 @@ def track(df, max_distance = 100, max_frame=20, joint_distance=20, class_infer=T
         print("Inferring the class in in a trajectory.....")
         df = major_vote_for_class(df)
 
+    df["frame"] = df["frame"].astype(int)
+
     # Do linear interpolation to fill up the missing bounding box
     if linear_infer:
         print("Doing linear interpolation in a trajectory.....")

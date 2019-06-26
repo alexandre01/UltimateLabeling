@@ -78,20 +78,17 @@ class InfoDetection(QGroupBox, StateListener, KeyboardListener):
         return ["{} ({})".format(k, cl) for k, cl in class_names.items()]
 
     def class_id_changed(self, i=-1, class_id=-1):
-        print("class_id_changed")
         if self.state.current_detection:
 
             if i >= 0:
                 class_id = list(self.state.track_info.class_names)[i]
 
             if class_id >= 0:
-                self.state.current_detection.class_id = class_id
                 self.block_listener = True
-                self.state.notify_listeners("on_detection_change")
+                self.state.modify_class_id_and_future(self.state.current_detection, class_id)
                 self.block_listener = False
 
     def instance_id_changed(self, i):
-        print("instance_id_changed")
         if self.state.current_detection and i >= 0:
             self.state.current_detection.track_id = i
 
@@ -101,7 +98,6 @@ class InfoDetection(QGroupBox, StateListener, KeyboardListener):
 
     def on_detection_change(self):
         if not self.block_listener:
-            print("on_detection_change")
             detection = self.state.current_detection
 
             self.instance_id_dropdown.blockSignals(True); self.class_id_dropdown.blockSignals(True)
@@ -119,7 +115,6 @@ class InfoDetection(QGroupBox, StateListener, KeyboardListener):
 
     def on_video_change(self):
         if not self.block_listener:
-            print("on_video_change")
             self.instance_id_dropdown.blockSignals(True); self.class_id_dropdown.blockSignals(True)
 
             self.class_id_dropdown.clear()
