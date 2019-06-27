@@ -1,9 +1,8 @@
 DEFAULT_CLASS_NAMES = {
- 0: 'bg',
- 1: 'person',
- 2: 'bicycle',
- 3: 'car',
- 4: 'motorcycle',
- 5: 'airplane',
-
+ 0: 'car',
+ 1: 'truck',
+ 2: 'bus',
+ 3: 'van',
+ 4: 'cyclist',
+ 5: 'pedestrian'
 }
