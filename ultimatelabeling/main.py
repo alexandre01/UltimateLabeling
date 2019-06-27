@@ -98,7 +98,8 @@ class CentralWidget(QWidget, StateListener):
 
         self.keyPressEvent = self.keyboard_notifier.keyPressEvent
         self.keyReleaseEvent = self.keyboard_notifier.keyReleaseEvent
-        self.keyboard_notifier.add_listeners(self.player, self.slider, self.img_widget, self.info_detection)
+        self.keyboard_notifier.add_listeners(self.player, self.slider, self.img_widget, self.info_detection,
+                                             self.tracking_manager)
 
         # Avoid keyboard not being triggered when focus on some widgets
         self.video_list_widget.setFocusPolicy(Qt.NoFocus)

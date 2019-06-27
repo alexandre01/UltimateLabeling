@@ -2,6 +2,7 @@ from PyQt5.QtWidgets import QPushButton, QGroupBox, QVBoxLayout, QHBoxLayout, QS
 from PyQt5.QtCore import QThread, pyqtSignal
 from ultimatelabeling.models.tracker import SocketTracker
 from ultimatelabeling.models import Detection, FrameMode
+from ultimatelabeling.models import KeyboardListener
 
 PORTS = [8787, 8788, 8789]
 
@@ -128,7 +129,7 @@ class TrackingButtons(QGroupBox):
         self.start_button.show()
 
 
-class TrackingManager(QGroupBox):
+class TrackingManager(QGroupBox, KeyboardListener):
     def __init__(self, state):
         super().__init__("Tracking")
         self.state = state
@@ -145,3 +146,11 @@ class TrackingManager(QGroupBox):
     def select(self, selected_i):
         for i, tracker in enumerate(self.trackers):
             tracker.thread.selected = i == selected_i
+
+    def on_key_tracker(self):
+        tracker = self.trackers[0]  # Always use the first tracker
+
+        if not tracker.thread.isRunning():
+            tracker.on_start_tracking()
+        else:
+            tracker.on_stop_tracking()
