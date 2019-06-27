@@ -67,6 +67,15 @@ class InfoDetection(QGroupBox, StateListener, KeyboardListener):
     def on_key_number(self, number):
         self.class_id_changed(class_id=number)
 
+    def on_key_ws(self, go_up):
+        if self.state.current_detection:
+            class_id = self.state.current_detection.class_id
+            class_names = list(self.state.track_info.class_names)
+            i = class_names.index(class_id)
+            new_i = (i + (1 if go_up else -1)) % len(class_names)
+
+            self.class_id_changed(i=new_i)
+
     def _get_track_ids(self):
         self.nb_track_ids = self.state.track_info.nb_track_ids
 

@@ -15,10 +15,10 @@ class KeyboardNotifier:
         if event.key() == Qt.Key_Space:
             self.notify_listeners("on_key_play_pause")
 
-        if event.key() == Qt.Key_Left:
+        if event.key() in [Qt.Key_Left, Qt.Key_A]:
             self.notify_listeners("on_key_left")
 
-        if event.key() == Qt.Key_Right:
+        if event.key() in [Qt.Key_Right, Qt.Key_D]:
             self.notify_listeners("on_key_right")
 
         if event.key() == Qt.Key_Control:
@@ -30,6 +30,9 @@ class KeyboardNotifier:
 
         if event.key() in self.NUMBERS_KEYS:
             self.notify_listeners("on_key_number", self.NUMBERS_KEYS.index(event.key()))
+
+        if event.key() in [Qt.Key_W, Qt.Key_S]:
+            self.notify_listeners("on_key_ws", event.key() == Qt.Key_W)
 
     def keyReleaseEvent(self, event):
           if event.key() == Qt.Key_Control:
@@ -64,4 +67,7 @@ class KeyboardListener:
         pass
 
     def on_key_number(self, number):
+        pass
+
+    def on_key_ws(self, go_up):
         pass
