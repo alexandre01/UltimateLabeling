@@ -15,6 +15,12 @@ class FrameMode:
     CONTROLLED = "controlled"  # when the current frame is being controlled by some thread (Player, Tracker, ...)
 
 
+class RightClickOption:
+    DELETE_CURRENT = 0
+    DELETE_PREVIOUS = 1
+    DELETE_FOLLOWING = 2
+
+
 class State:
     def __init__(self):
         self.video_list = []
@@ -36,6 +42,8 @@ class State:
         self.detection_server_running = False
 
         self.detection_detached_video_name = None
+
+        self.right_click_option = RightClickOption.DELETE_CURRENT
 
         self.keypoints_show_bbox = False
         self.keypoints_instance_color = False
@@ -175,10 +183,19 @@ class State:
             detection = self.track_info.detections[detection_index]
 
         track_id = detection.track_id
-        
-        for i in range(self.current_frame, self.nb_frames):
-            if not self.track_info.remove_detection(track_id, self.get_file_name(i)):
-                break
+
+        if self.right_click_option == RightClickOption.DELETE_CURRENT:
+            self.track_info.remove_detection(track_id, self.get_file_name())
+
+        elif self.right_click_option == RightClickOption.DELETE_FOLLOWING:
+            for i in range(self.current_frame, self.nb_frames):
+                if not self.track_info.remove_detection(track_id, self.get_file_name(i)):
+                    break
+
+        elif self.right_click_option == RightClickOption.DELETE_PREVIOUS:
+            for i in range(self.current_frame, -1, -1):
+                if not self.track_info.remove_detection(track_id, self.get_file_name(i)):
+                    break
 
         self.notify_listeners("on_detection_change")
 
