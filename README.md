@@ -23,6 +23,7 @@ For remote server processing, follow the guide below in order to configure the [
 - [x] Complete the Hungarian assignment algorithm
 - [x] Add import/export feature
 - [ ] Add super-resolution feature
+- [ ] Change default COCO class names
 
 
 ## Demo 

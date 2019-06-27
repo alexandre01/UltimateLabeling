@@ -36,7 +36,7 @@ setup(
         'tqdm',
         'torch',
         'pillow',
-        'matplotlib'
+        'matplotlib',
         'pandas',
         'scipy'
     ],
