@@ -30,8 +30,8 @@ class IO:
         h, w = self.state.image_size
 
         for file_name in self.state.get_file_names():
-            idx = imported_base_names.index(file_name)
-            if idx >= 0:
+            if file_name in imported_base_names:
+                idx = imported_base_names.index(file_name)
                 df = pd.read_csv(imported_files[idx], names=["cls_no", "xc", "yc", "w", "h"], sep=" ", header=None, index_col=False)
 
                 # Convert coordinates from percentage to absolute
