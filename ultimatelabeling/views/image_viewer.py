@@ -258,6 +258,8 @@ class ImageWidget(QWidget, StateListener, KeyboardListener):
             img = self.original_img.copy()
             h, w, _ = img.shape = img.shape
 
+        self.state.image_size = (h, w)
+
         self.anchors_quadtree = AnchorQuadTree(Bbox(0, 0, w, h))
         self.anchors_quadtree.build_quadtree(self.state.track_info.detections)
 
@@ -278,7 +280,8 @@ class ImageWidget(QWidget, StateListener, KeyboardListener):
 
     def draw_bboxes(self, img):
         for detection in self.state.track_info.detections:
-            label = None if detection.class_id not in self.state.track_info.class_names else self.state.track_info.class_names[detection.class_id]
+            label = None if detection.class_id not in self.state.track_info.class_names else \
+                "{}, {}".format(self.state.track_info.class_names[detection.class_id], detection.track_id)
             draw_detection(img, detection, kps_show_bbox=self.state.keypoints_show_bbox,
                            kps_instance_color=self.state.keypoints_instance_color, bbox_class_color=self.state.bbox_class_color,
                            label=label)

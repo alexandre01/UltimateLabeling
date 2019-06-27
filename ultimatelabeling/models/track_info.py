@@ -79,16 +79,18 @@ class TrackInfo:
                     bbox = Bbox(*detection["bbox"]).xcycwh
                     df = df.append({"frame": i, "cls_no": detection["class_id"], "id": detection["track_id"],
                                     "xc": bbox[0], "yc": bbox[1], "w": bbox[2], "h": bbox[3], "infer": 0}, ignore_index=True)
+
+        df[["frame", "cls_no", "id", "infer"]] = df[["frame", "cls_no", "id", "infer"]].astype(int)
         return df
 
-    def from_df(self, df, file_names):
+    def from_df_all(self, df, file_names):
 
         for i, file_name in enumerate(file_names):
             detections = df[df.frame == i]
 
             txt_file = os.path.join(OUTPUT_DIR, "{}/{}.txt".format(self.video_name, file_name))
             with open(txt_file, "w") as f:
-                for index, row in detections.iterrows():
+                for _, row in detections.iterrows():
                     # TODO: doing this we loose polgon, keypoints info
 
                     center, size = np.array([row["xc"], row["yc"]], dtype=float), np.array([row["w"], row["h"]], dtype=float)
@@ -102,6 +104,23 @@ class TrackInfo:
 
         # Update current detections
         self.detections = self.get_detections(self.file_name)
+
+    def write_from_df(self, df, file_name):
+        txt_file = os.path.join(OUTPUT_DIR, "{}/{}.txt".format(self.video_name, file_name))
+
+        with open(txt_file, "w") as f:
+            for _, row in df.iterrows():
+                center, size = np.array([row["xc"], row["yc"]], dtype=float), np.array([row["w"], row["h"]], dtype=float)
+                bbox = Bbox.from_center_size(center, size)
+                d = Detection(class_id=int(row["cls_no"]), track_id=self.nb_track_ids, bbox=bbox)
+                f.write("{}\n".format(json.dumps(d.to_json())))
+
+                # Update nb_track_ids
+                self.nb_track_ids += 1
+
+        # Update current detections
+        if file_name == self.file_name:
+            self.detections = self.get_detections(self.file_name)
 
     def get_detections(self, file_name):
         txt_file = os.path.join(OUTPUT_DIR, "{}/{}.txt".format(self.video_name, file_name))

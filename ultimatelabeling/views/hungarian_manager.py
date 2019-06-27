@@ -38,4 +38,4 @@ class HungarianThread(QThread):
     def run(self):
         detections_df = self.state.track_info.to_df(self.state.get_file_names())
         detections_df = track(detections_df)
-        self.state.track_info.from_df(detections_df, self.state.get_file_names())
+        self.state.track_info.from_df_all(detections_df, self.state.get_file_names())

@@ -1,5 +1,5 @@
 import os
-from PyQt5.QtWidgets import QSlider, QWidget, QHBoxLayout, QLabel
+from PyQt5.QtWidgets import QSlider, QWidget, QHBoxLayout, QLabel, QVBoxLayout
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QKeyEvent
 from ultimatelabeling.models import StateListener, KeyboardListener, FrameMode
@@ -25,11 +25,21 @@ class VideoSlider(QWidget, StateListener, KeyboardListener):
 
         self.label = QLabel()
         self.label.setFixedWidth(150)
+
+        self.file_name_label = QLabel()
+        self.file_name_label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+
         self.on_video_change()
 
-        layout = QHBoxLayout()
-        layout.addWidget(self.label)
-        layout.addWidget(self.slider)
+        layout = QVBoxLayout()
+
+        slider_layout = QHBoxLayout()
+        slider_layout.addWidget(self.label)
+        slider_layout.addWidget(self.slider)
+
+        layout.addLayout(slider_layout)
+        layout.addWidget(self.file_name_label)
+
         self.setLayout(layout)
 
     def keyPressEvent(self, event):
@@ -48,6 +58,7 @@ class VideoSlider(QWidget, StateListener, KeyboardListener):
 
     def update_label(self):
         self.label.setText("Frame {}/{}".format(self.state.current_frame + 1, self.state.nb_frames))
+        self.file_name_label.setText(self.state.file_names[self.state.current_frame])
 
     def on_video_change(self):
         self.on_current_frame_change()

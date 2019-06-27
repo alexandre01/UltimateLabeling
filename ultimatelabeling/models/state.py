@@ -43,10 +43,10 @@ class State:
         self.copy_annotations_option = False
 
         self.visible_area = (0, 0, 0, 0)
+        self.image_size = (0, 0)
         self.drawing = False
 
         self.listeners = set()
-        self.mutex = QMutex()
 
     def get_file_name(self, frame=None):
         if frame is None:
@@ -61,7 +61,6 @@ class State:
             yield self.get_file_name(frame)
 
     def find_videos(self):
-        print(DATA_DIR)
         return next(os.walk(DATA_DIR))[1]
 
     def check_raw_videos(self):
@@ -84,8 +83,7 @@ class State:
 
     def save_state(self):
         with open(STATE_PATH, 'wb') as f:
-            state_dict = {k: v for k, v in self.__dict__.items() if k not in ["listeners", "track_info", "mutex",
-                                                                              "drawing"]}
+            state_dict = {k: v for k, v in self.__dict__.items() if k not in ["listeners", "track_info", "drawing"]}
             pickle.dump(state_dict, f)
 
     def load_state(self):

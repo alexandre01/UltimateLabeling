@@ -7,7 +7,7 @@
 
 A multi-purpose Video Labeling GUI in Python with integrated SOTA detector and tracker. Developed using PyQt5.
 
-**[Under development]**
+**[Disclaimer: This repository is sill under development]**
 
 The integrated object detectors and trackers are based on the following codes:
 - [OpenPifPaf](https://github.com/vita-epfl/openpifpaf): for human pose estimation
@@ -21,6 +21,7 @@ For remote server processing, follow the guide below in order to configure the [
 - [x] Load/write tracking info in seperate files for better performance on large videos
 - [x] Fix lag problems of the player
 - [x] Complete the Hungarian assignment algorithm
+- [x] Add import/export feature
 - [ ] Add super-resolution feature
 
 
@@ -43,32 +44,41 @@ For remote server processing, follow the guide below in order to configure the [
 
 ## Installation
 
+Start by cloning the repository on your computer:
 ```bash
 git clone https://github.com/alexandre01/UltimateLabeling.git
 cd UltimateLabeling
+```
+
+We recommend installing the required packages in a virtual environment to avoid any library versions conflicts. The following will do this for you:
+```bash
 virtualenv --no-site-packages venv
 source venv/bin/activate
 pip install -r requirements.txt
 ```
 
-
-Install the requirements using `pip` as follows:
-
+Otherwise, just install the requirements on your main Python environment using `pip` as follows:
 ```bash
 pip install -r requirements
 ```
 
-Put the videos (folder of images or video file, the frames will be extracted automatically) inside the `data` folder. Then, open the GUI using 
-
+Finally, open the GUI using: 
 ```bash
 python -m ultimatelabeling.main
 ```
 
-After closing the window, the annotations are available in the `output` folder.
+## Input / output
 
+To start labeling your videos, put these (folder of images or video file, the frames will be extracted automatically) inside the `data` folder. 
+
+- Import labels: To import existing .CSV labels, hit `Cmd+I` (or `Ctrl+I`). UltimateLabeling expects to read one .CSV file per frame, in the format: "class_id", "xc", "yc", "w", "h".
+
+- Export labels: The annotations are internally saved in the `output` folder. To export them in a unique .CSV file, hit `Cmd+E` (or `Ctrl+E`) and choose the destination location.
+
+If you need other file formats for your projects, please write a GitHub issue or submit a Pull request.
 
 ## Remote server configuration
-To configure the remote GPU server, follow the steps below:
+To configure the remote GPU server (using the code in [server files](https://github.com/alexandre01/UltimateLabeling_server).), follow the steps below:
 
 ```bash
 git clone https://github.com/alexandre01/UltimateLabeling_server.git

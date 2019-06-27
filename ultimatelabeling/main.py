@@ -22,13 +22,22 @@ class MainWindow(QMainWindow):
         mainMenu = self.menuBar()
 
         fileMenu = mainMenu.addMenu('&File')
-        toolsMenu = mainMenu.addMenu('&Tools')
         helpMenu = mainMenu.addMenu('&Help')
 
         close = QAction('Close window', self)
         close.setShortcut('Ctrl+W')
         close.triggered.connect(self.close)
         fileMenu.addAction(close)
+
+        import_action = QAction('Import', self)
+        import_action.setShortcut('Ctrl+I')
+        import_action.triggered.connect(self.central_widget.io.on_import_click)
+        fileMenu.addAction(import_action)
+
+        export = QAction('Export', self)
+        export.setShortcut('Ctrl+E')
+        export.triggered.connect(self.central_widget.io.on_export_click)
+        fileMenu.addAction(export)
 
         """save = QAction('Save', self)
         save.setShortcut('Ctrl+S')
@@ -84,6 +93,8 @@ class CentralWidget(QWidget, StateListener):
         self.tracking_manager = TrackingManager(self.state)
         self.hungarian_button = HungarianManager(self.state)
         self.info_detection = InfoDetection(self.state)
+
+        self.io = IO(self, self.state)
 
         self.keyPressEvent = self.keyboard_notifier.keyPressEvent
         self.keyReleaseEvent = self.keyboard_notifier.keyReleaseEvent
