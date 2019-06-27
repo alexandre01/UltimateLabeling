@@ -18,8 +18,15 @@ class DetectionManager(QGroupBox):
         self.detector = SocketDetector()
         options_layout = QFormLayout()
 
-        self.crop_checkbox = QCheckBox("Use visible image as cropping area", self)
-        options_layout.addRow(self.crop_checkbox)
+        crop_layout = QHBoxLayout()
+        self.crop_checkbox = QCheckBox("Use cropping area", self)
+        self.crop_checkbox.setChecked(self.state.use_cropping_area)
+        self.crop_checkbox.stateChanged.connect(self.checked_cropping_area)
+        self.crop_button = QPushButton("Choose cropping area")
+        self.crop_button.clicked.connect(self.save_cropping_area)
+        crop_layout.addWidget(self.crop_checkbox)
+        crop_layout.addWidget(self.crop_button)
+        options_layout.addRow(crop_layout)
 
         self.detached_checkbox = QCheckBox("Detached mode (for videos)", self)
         options_layout.addRow(self.detached_checkbox)
@@ -134,6 +141,22 @@ class DetectionManager(QGroupBox):
 
         self.state.notify_listeners("on_detection_change")
 
+    def checked_cropping_area(self):
+        if self.crop_checkbox.isChecked():
+            self.state.use_cropping_area = True
+
+            if self.state.stored_area == (0, 0, 0, 0):
+                self.state.stored_area = self.state.visible_area
+        else:
+            self.state.use_cropping_area = False
+
+        self.state.notify_listeners("on_current_frame_change")
+
+    def save_cropping_area(self):
+        self.crop_checkbox.setChecked(True)
+        self.state.stored_area = self.state.visible_area
+        self.state.notify_listeners("on_current_frame_change")
+
 
 class DetectionThread(QThread):
     err_signal = pyqtSignal(str)
@@ -150,7 +173,7 @@ class DetectionThread(QThread):
 
         crop_area = None
         if self.parent.crop_checkbox.isChecked():
-            crop_area = Bbox(*self.state.visible_area)
+            crop_area = Bbox(*self.state.stored_area)
 
         detached = self.parent.detached_checkbox.isChecked()
 

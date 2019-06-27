@@ -7,7 +7,7 @@ from ultimatelabeling import utils
 
 
 class IO:
-    def __init__(self, parent: QWidget, state: State):
+    def __init__(self, parent, state: State):
         self.parent = parent
         self.state = state
 
@@ -41,6 +41,7 @@ class IO:
                 self.state.track_info.write_from_df(df, file_name)
 
         self.state.notify_listeners("on_current_frame_change")
+        self.parent.img_widget.holding_ctrl = False
         QMessageBox.information(self.parent, "", "Done!")
 
     def on_export_click(self):
@@ -54,6 +55,7 @@ class IO:
 
         df.to_csv(file_path, sep=" ", header=False, index=False)
 
+        self.parent.img_widget.holding_ctrl = False
         QMessageBox.information(self.parent, "", "Done!")
 
     def open_folder_name_dialog(self):

@@ -42,7 +42,9 @@ class State:
         self.bbox_class_color = False
         self.copy_annotations_option = False
 
+        self.use_cropping_area = False
         self.visible_area = (0, 0, 0, 0)
+        self.stored_area = (0, 0, 0, 0)
         self.image_size = (0, 0)
         self.drawing = False
 

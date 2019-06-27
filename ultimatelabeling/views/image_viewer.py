@@ -9,6 +9,7 @@ from ultimatelabeling.models.polygon import Bbox
 from ultimatelabeling.models.track_info import Detection
 from ultimatelabeling.styles import Theme
 import numpy as np
+import math
 from ultimatelabeling import utils
 
 
@@ -270,6 +271,7 @@ class ImageWidget(QWidget, StateListener, KeyboardListener):
         self.keypoints_quadtree.build_quadtree(self.state.track_info.detections)
 
         self.draw_bboxes(img)
+        self.draw_stored_area(img)
         self.draw_image(img)
 
     def on_detection_change(self):
@@ -302,6 +304,25 @@ class ImageWidget(QWidget, StateListener, KeyboardListener):
 
         self.update_zoom_offset()
 
+    def draw_stored_area(self, img):
+        if self.state.use_cropping_area:
+            x_crop, y_crop, w_crop, h_crop = self.state.stored_area
+            bbox = Bbox(*self.state.stored_area)
+            H, W = self.state.image_size
+
+            # Number of repeated cropping areas to span the entire image
+            n_left = math.ceil(x_crop / w_crop)
+            n_right = math.ceil((W - (x_crop + w_crop)) / w_crop)
+            n_top = math.ceil(y_crop / h_crop)
+            n_bottom = math.ceil((H - (y_crop + h_crop)) / h_crop)
+
+            for i in range(-n_top, 1 + n_bottom):
+                for j in range(-n_left, 1 + n_right):
+                    pos_offset = bbox.pos.copy()
+                    pos_offset += [j * w_crop, i * h_crop]
+                    top_left, bottom_right = tuple(pos_offset.astype(int)), tuple((pos_offset + bbox.size).astype(int))
+                    cv2.rectangle(img, top_left, bottom_right, color=(255, 0, 0), thickness=5)
+
     def update_zoom_offset(self):
         M = np.float32([[self.zoom * self.img_scale, 0, self.offset.x()],
                         [0, self.zoom * self.img_scale, self.offset.y()]])
@@ -309,8 +330,7 @@ class ImageWidget(QWidget, StateListener, KeyboardListener):
 
         self.state.visible_area = self.get_visible_area()
 
-        self.signal.emit()
-        # self.update()
+        self.signal.emit()  # update() is called in main thread
 
     def paintEvent(self, event):
         qp = QPainter()
