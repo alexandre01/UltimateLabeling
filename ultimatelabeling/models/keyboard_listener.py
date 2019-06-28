@@ -25,8 +25,7 @@ class KeyboardNotifier:
             self.notify_listeners("on_key_ctrl", True)
 
         if event.key() == Qt.Key_Delete:
-            print("delete")
-            self.notify_listeners("on_key_delete", True)
+            self.notify_listeners("on_key_delete")
 
         if event.key() in self.NUMBERS_KEYS:
             self.notify_listeners("on_key_number", self.NUMBERS_KEYS.index(event.key()))

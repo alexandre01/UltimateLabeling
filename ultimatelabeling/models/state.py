@@ -176,7 +176,7 @@ class State:
         elif detection is not None:
             self.track_info.detections.remove(detection)
 
-        # For UI responsiveness, it's preferable to keep the previous bbox visible rather than lag
+        # For UI responsiveness, it's preferable to keep the previous bbox visible rather than having a delay
         # self.notify_listeners("on_detection_change")
     
     def remove_detection_and_future(self, detection_index=None, detection=None):
@@ -185,15 +185,20 @@ class State:
 
         track_id = detection.track_id
 
+        print("remove detection")
+
         if self.right_click_option == RightClickOption.DELETE_CURRENT:
+            print("current")
             self.track_info.remove_detection(track_id, self.get_file_name())
 
         elif self.right_click_option == RightClickOption.DELETE_FOLLOWING:
+            print("following")
             for i in range(self.current_frame, self.nb_frames):
                 if not self.track_info.remove_detection(track_id, self.get_file_name(i)):
                     break
 
         elif self.right_click_option == RightClickOption.DELETE_PREVIOUS:
+            print("previous")
             for i in range(self.current_frame, -1, -1):
                 if not self.track_info.remove_detection(track_id, self.get_file_name(i)):
                     break

@@ -39,7 +39,7 @@ class TimerThread(QThread):
         super().__init__()
 
     def run(self):
-        time.sleep(1.5)
+        time.sleep(0.5)
         self.finished_signal.emit()
 
 

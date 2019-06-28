@@ -11,15 +11,20 @@ class IO:
         self.parent = parent
         self.state = state
 
+    def undo_ctrl(self):
+        self.parent.img_widget.holding_ctrl = False
+
     def on_import_click(self):
         qm = QMessageBox
         res = qm.question(self.parent, "", "Are you sure you want to import? This will overwrite the current labels",
                           qm.Yes | qm.No)
         if res == qm.No:
+            self.undo_ctrl()
             return
 
         folder_path = self.open_folder_name_dialog()
-        if folder_path is None:
+        if folder_path is None or folder_path == "":
+            self.undo_ctrl()
             return
 
         imported_files = glob.glob(os.path.join(folder_path, "*.csv"))
@@ -41,12 +46,13 @@ class IO:
                 self.state.track_info.write_from_df(df, file_name)
 
         self.state.notify_listeners("on_current_frame_change")
-        self.parent.img_widget.holding_ctrl = False
+        self.undo_ctrl()
         QMessageBox.information(self.parent, "", "Done!")
 
     def on_export_click(self):
         file_path = self.save_file_dialog()
-        if file_path is None:
+        if file_path is None or file_path == "":
+            self.undo_ctrl()
             return
 
         df = self.state.track_info.to_df(self.state.get_file_names())
@@ -55,7 +61,7 @@ class IO:
 
         df.to_csv(file_path, sep=" ", header=False, index=False)
 
-        self.parent.img_widget.holding_ctrl = False
+        self.undo_ctrl()
         QMessageBox.information(self.parent, "", "Done!")
 
     def open_folder_name_dialog(self):

@@ -19,6 +19,7 @@ class Options(QGroupBox, StateListener):
         right_click_label = QLabel("Right click:")
         self.right_click_dropdown = QComboBox()
         self.right_click_dropdown.addItems(["Delete current frame", "Delete all previous frames", "Delete all following frames"])
+        self.right_click_dropdown.setCurrentIndex(self.state.right_click_option)
         self.right_click_dropdown.currentIndexChanged.connect(self.right_click_changed)
 
         layout = QHBoxLayout()

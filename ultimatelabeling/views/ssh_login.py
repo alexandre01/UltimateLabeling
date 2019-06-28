@@ -142,7 +142,6 @@ class SSHLogin(QGroupBox, StateListener):
         if crop_area is not None:
             coords = crop_area.to_json()
             args += " -c {}".format(" ".join([str(int(x)) for x in coords]))
-        print(args)
         stdin, stdout, stderr = self.ssh_client.exec_command('cd UltimateLabeling_server && source detection/env/bin/activate && tmux new -d -s detached '
                                                              '"CUDA_VISIBLE_DEVICES=0 python -m detector_detached {}"'.format(args))
 
