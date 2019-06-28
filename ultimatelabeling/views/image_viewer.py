@@ -10,6 +10,7 @@ from ultimatelabeling.models.track_info import Detection
 from ultimatelabeling.styles import Theme
 import numpy as np
 import math
+import time
 from ultimatelabeling import utils
 
 
@@ -29,6 +30,17 @@ class Anchor:
 
     def __repr__(self):
         return "Anchor({})".format(self.anchor)
+
+
+class TimerThread(QThread):
+    finished_signal = pyqtSignal()
+
+    def __init__(self):
+        super().__init__()
+
+    def run(self):
+        time.sleep(1.5)
+        self.finished_signal.emit()
 
 
 class AnchorQuadTree:
@@ -223,6 +235,9 @@ class ImageWidget(QWidget, StateListener, KeyboardListener):
         self.current_frame = None
         self.current_video = None
 
+        self.timer_thread = TimerThread()
+        self.timer_thread.finished_signal.connect(self.update_quadtrees)
+
         self.on_current_frame_change()
 
     def get_visible_area(self):
@@ -242,9 +257,12 @@ class ImageWidget(QWidget, StateListener, KeyboardListener):
 
     def on_current_frame_change(self):
 
+        if self.timer_thread.isRunning():
+            self.timer_thread.terminate()
         self.state.drawing = True
 
-        if self.current_frame != self.state.current_frame or self.current_video != self.state.current_video:
+        is_different_img = self.current_frame != self.state.current_frame or self.current_video != self.state.current_video
+        if is_different_img:
             self.current_frame = self.state.current_frame
             self.current_video = self.state.current_video
 
@@ -255,24 +273,29 @@ class ImageWidget(QWidget, StateListener, KeyboardListener):
             h, w, _ = img.shape
             self.img_scale = float(self.width()) / float(w)
             self.original_img = img.copy()
+
+            self.timer_thread.start()
         else:
             img = self.original_img.copy()
             h, w, _ = img.shape = img.shape
 
         self.state.image_size = (h, w)
 
-        self.anchors_quadtree = AnchorQuadTree(Bbox(0, 0, w, h))
-        self.anchors_quadtree.build_quadtree(self.state.track_info.detections)
-
-        self.detections_quadtree = DetectionQuadTree(Bbox(0, 0, w, h))
-        self.detections_quadtree.build_quadtree(self.state.track_info.detections)
-
-        self.keypoints_quadtree = KeypointQuadTree(Bbox(0, 0, w, h))
-        self.keypoints_quadtree.build_quadtree(self.state.track_info.detections)
-
         self.draw_bboxes(img)
         self.draw_stored_area(img)
         self.draw_image(img)
+
+        self.anchors_quadtree = AnchorQuadTree(Bbox(0, 0, w, h))
+        self.detections_quadtree = DetectionQuadTree(Bbox(0, 0, w, h))
+        self.keypoints_quadtree = KeypointQuadTree(Bbox(0, 0, w, h))
+
+        if not is_different_img:
+            self.update_quadtrees()
+
+    def update_quadtrees(self):
+        self.anchors_quadtree.build_quadtree(self.state.track_info.detections)
+        self.detections_quadtree.build_quadtree(self.state.track_info.detections)
+        self.keypoints_quadtree.build_quadtree(self.state.track_info.detections)
 
     def on_detection_change(self):
         self.on_current_frame_change()

@@ -140,10 +140,11 @@ class SSHLogin(QGroupBox, StateListener):
         stdin, stdout, stderr = self.ssh_client.exec_command("tmux kill-session -t detached")  # Killing possible previous socket server
         args = "-s {} -d {}".format(seq_path, detector)
         if crop_area is not None:
-            coords = crop_area.tolist()
-            args += "-c {}".format(" ".join([str(int(x)) for x in coords]))
+            coords = crop_area.to_json()
+            args += " -c {}".format(" ".join([str(int(x)) for x in coords]))
+        print(args)
         stdin, stdout, stderr = self.ssh_client.exec_command('cd UltimateLabeling_server && source detection/env/bin/activate && tmux new -d -s detached '
-                                                             '"CUDA_VISIBLE_DEVICES=0 python -m detector_detached {}'.format(args))
+                                                             '"CUDA_VISIBLE_DEVICES=0 python -m detector_detached {}"'.format(args))
 
         print(stdout.read().decode())
         print(stderr.read().decode())
@@ -171,8 +172,8 @@ class SSHLogin(QGroupBox, StateListener):
         return data
 
     def load_detached_detections(self, video_name):
-        local_detections_folder = os.path.join(OUTPUT_DIR, video_name)
-        server_detections_folder = os.path.join(SERVER_DIR, local_detections_folder)
+        local_detections_folder = os.path.join(OUTPUT_DIR)
+        server_detections_folder = os.path.join(SERVER_DIR, "output", video_name)
 
         try:
             with SCPClient(self.ssh_client.get_transport()) as scp:

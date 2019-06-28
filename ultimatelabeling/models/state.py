@@ -176,7 +176,8 @@ class State:
         elif detection is not None:
             self.track_info.detections.remove(detection)
 
-        self.notify_listeners("on_detection_change")
+        # For UI responsiveness, it's preferable to keep the previous bbox visible rather than lag
+        # self.notify_listeners("on_detection_change")
     
     def remove_detection_and_future(self, detection_index=None, detection=None):
         if detection_index is not None:

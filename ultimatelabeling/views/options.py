@@ -16,7 +16,7 @@ class Options(QGroupBox, StateListener):
         self.copy_option_checkbox.setCheckState(Qt.Checked if self.state.copy_annotations_option else Qt.Unchecked)
         self.copy_option_checkbox.stateChanged.connect(lambda state: self.state.set_copy_annotations_option(state == Qt.Checked))
 
-        right_click_label = QLabel("Right click")
+        right_click_label = QLabel("Right click:")
         self.right_click_dropdown = QComboBox()
         self.right_click_dropdown.addItems(["Delete current frame", "Delete all previous frames", "Delete all following frames"])
         self.right_click_dropdown.currentIndexChanged.connect(self.right_click_changed)

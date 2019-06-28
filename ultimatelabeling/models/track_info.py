@@ -2,6 +2,7 @@ import json
 import os
 import pandas as pd
 import numpy as np
+import time
 from .polygon import Polygon, Bbox, Keypoints
 from ultimatelabeling.class_names import DEFAULT_CLASS_NAMES
 from ultimatelabeling.config import OUTPUT_DIR
@@ -72,6 +73,9 @@ class TrackInfo:
 
         for i, file_name in enumerate(file_names):
             txt_file = os.path.join(OUTPUT_DIR, "{}/{}.txt".format(self.video_name, file_name))
+
+            if not os.path.exists(txt_file):
+                continue
 
             with open(txt_file, "r") as f:
                 for d in f:
@@ -163,14 +167,32 @@ class TrackInfo:
         self.nb_track_ids = max(self.nb_track_ids, max([d.track_id for d in detections] or [0]) + 1)
 
     def add_detection(self, detection, file_name=None):
-        if file_name is None or file_name == self.file_name:
-            self.detections.append(detection)
-        else:
-            txt_file = os.path.join(OUTPUT_DIR, "{}/{}.txt".format(self.video_name, file_name))
+        if file_name is None:
+            file_name = self.file_name
 
-            with open(txt_file, "w") as f:
+        txt_file = os.path.join(OUTPUT_DIR, "{}/{}.txt".format(self.video_name, file_name))
+        track_id = detection.track_id
+
+        counter = 0
+        with open(txt_file, "r+") as f:
+            detections = f.readlines()
+            print(detections)
+            f.seek(0)
+            for d in detections:
+                d_json = json.loads(d.rstrip('\n'))
+                print(d_json)
+                if d_json["track_id"] != track_id:
+                    f.write(d)
+                else:
+                    d_json["bbox"] = detection.bbox.to_json()
+                    f.write("{}\n".format(json.dumps(d_json)))
+                    counter += 1
+
+            if counter == 0:
                 f.write("{}\n".format(json.dumps(detection.to_json())))
+            f.truncate()
 
+        self.detections = self.get_detections(file_name)
         self.nb_track_ids = max(self.nb_track_ids, detection.track_id + 1)
 
     def remove_detection(self, track_id, file_name):
