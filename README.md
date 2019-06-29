@@ -20,8 +20,7 @@ A multi-purpose Video Labeling GUI in Python with integrated SOTA detector and t
 ## Demo 
 <img src="docs/ultimatelabeling.jpg" width="90%" />
 
-<img src="docs/uptown_funk.jpg" width="45%" />
-<img src="docs/roundabout.jpg" width="45%" />
+<img src="docs/uptown_funk.jpg" width="45%" /> <img src="docs/roundabout.jpg" width="45%" />
 
 
 The integrated object detectors and trackers are based on the following codes:
