@@ -33,7 +33,7 @@ class KeyboardNotifier:
         if event.key() in [Qt.Key_W, Qt.Key_S]:
             self.notify_listeners("on_key_ws", event.key() == Qt.Key_W)
 
-        if event.key() == Qt.Key_P:
+        if event.key() == Qt.Key_T:
             self.notify_listeners("on_key_tracker")
 
     def keyReleaseEvent(self, event):

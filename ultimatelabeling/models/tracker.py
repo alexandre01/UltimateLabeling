@@ -111,3 +111,25 @@ class SocketTracker(Tracker):
     def terminate(self):
         self.send_terminate_signal()
         self.client_socket.close()
+
+
+class KCFTracker(Tracker):
+    def __init__(self, state, **kwargs):
+        super().__init__(**kwargs)
+        self.state = state
+
+    def init(self, image_path, bbox):
+        img = cv2.imread(image_path)
+        self.tracker = cv2.TrackerKCF_create()
+        self.tracker.init(img, tuple(bbox.to_json()))
+        self.tracker.update(img)
+
+    def track(self, image_path):
+        img = cv2.imread(image_path)
+        success, bbox = self.tracker.update(img)
+
+        if not success:
+            return None, None
+
+        bbox = Bbox(*bbox)
+        return bbox, Polygon.from_bbox(bbox)

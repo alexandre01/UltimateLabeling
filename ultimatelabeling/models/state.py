@@ -45,6 +45,8 @@ class State:
 
         self.right_click_option = RightClickOption.DELETE_CURRENT
 
+        self.last_used_tracker = 0
+
         self.keypoints_show_bbox = False
         self.keypoints_instance_color = False
         self.bbox_class_color = False
@@ -55,6 +57,8 @@ class State:
         self.stored_area = (0, 0, 0, 0)
         self.image_size = (0, 0)
         self.drawing = False
+
+        self.img_viewer = None
 
         self.listeners = set()
 
@@ -93,7 +97,8 @@ class State:
 
     def save_state(self):
         with open(STATE_PATH, 'wb') as f:
-            state_dict = {k: v for k, v in self.__dict__.items() if k not in ["listeners", "track_info", "drawing"]}
+            state_dict = {k: v for k, v in self.__dict__.items() if k not in ["listeners", "track_info", "drawing",
+                                                                              "img_viewer"]}
             pickle.dump(state_dict, f)
 
     def load_state(self):
@@ -252,4 +257,7 @@ class StateListener:
         pass
 
     def on_detection_change(self):
+        pass
+
+    def on_frame_mode_change(self):
         pass

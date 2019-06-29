@@ -93,7 +93,7 @@ Keyboard:
 - A (or Left key): next frame
 - D (or Right key): previous frame
 - W/S: class up/down
-- P: start/stop tracking
+- T: start/stop tracking (last used tracker)
 - Numberpad: asssign given class_id
 - Spacebar: play the video
 

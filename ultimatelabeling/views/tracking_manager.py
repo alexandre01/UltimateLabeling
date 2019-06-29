@@ -1,21 +1,21 @@
 from PyQt5.QtWidgets import QPushButton, QGroupBox, QVBoxLayout, QHBoxLayout, QStyle, QPlainTextEdit, QMessageBox
 from PyQt5.QtCore import QThread, pyqtSignal
-from ultimatelabeling.models.tracker import SocketTracker
+from ultimatelabeling.models.tracker import SocketTracker, KCFTracker
 from ultimatelabeling.models import Detection, FrameMode
 from ultimatelabeling.models import KeyboardListener
 
-PORTS = [8787, 8788, 8789]
+PORTS = [8787, 8788]
 
 
 class TrackingThread(QThread):
     err_signal = pyqtSignal(str)
 
-    def __init__(self, state, port):
+    def __init__(self, state_ref, tracker, **kwargs):
         super().__init__()
 
-        self.state = state
+        self.state = state_ref
         self.runs = False
-        self.tracker = SocketTracker(port)
+        self.tracker = tracker(**kwargs)
 
         self.selected = False
 
@@ -50,6 +50,9 @@ class TrackingThread(QThread):
                 self.err_signal.emit(str(e))
                 return
 
+            if bbox is None:
+                break
+
             detection = Detection(class_id=class_id, track_id=track_id, polygon=polygon, bbox=bbox)
 
             self.state.add_detection(detection, frame)
@@ -66,14 +69,18 @@ class TrackingThread(QThread):
 
 
 class TrackingButtons(QGroupBox):
-    def __init__(self, state, parent, i):
-        super().__init__("Tracker {}".format(i+1))
+    def __init__(self, state, parent, i, name):
+        super().__init__(name)
 
         self.state = state
         self.parent = parent
         self.i = i
 
-        self.thread = TrackingThread(self.state, port=PORTS[i])
+        if name == "SiamMask":
+            self.thread = TrackingThread(self.state, tracker=SocketTracker, port=PORTS[i])
+        else:
+            self.thread = TrackingThread(self.state, tracker=KCFTracker, state=self.state)
+
         self.thread.err_signal.connect(self.display_err_message)
         self.thread.finished.connect(self.on_finished_tracking)
 
@@ -101,7 +108,7 @@ class TrackingButtons(QGroupBox):
         QMessageBox.warning(self, "", "Error: {}".format(err_message))
 
     def on_start_tracking(self):
-        if not self.state.tracking_server_running:
+        if not self.state.tracking_server_running and self.i < 2:
             QMessageBox.warning(self, "", "Tracking server is not connected.")
             return
 
@@ -125,6 +132,7 @@ class TrackingButtons(QGroupBox):
             self.thread.terminate()
 
         self.state.frame_mode = FrameMode.MANUAL
+        self.state.notify_listeners("on_frame_mode_change")
         self.stop_button.hide()
         self.start_button.show()
 
@@ -134,7 +142,11 @@ class TrackingManager(QGroupBox, KeyboardListener):
         super().__init__("Tracking")
         self.state = state
 
-        self.trackers = [TrackingButtons(self.state, self, i) for i in range(3)]
+        self.trackers = [
+            TrackingButtons(self.state, self, 0, "SiamMask"),
+            TrackingButtons(self.state, self, 1, "SiamMask"),
+            TrackingButtons(self.state, self, 2, "KCF")
+        ]
 
         layout = QHBoxLayout()
 
@@ -144,11 +156,13 @@ class TrackingManager(QGroupBox, KeyboardListener):
         self.setLayout(layout)
 
     def select(self, selected_i):
+        self.state.last_used_tracker = selected_i
+
         for i, tracker in enumerate(self.trackers):
             tracker.thread.selected = i == selected_i
 
     def on_key_tracker(self):
-        tracker = self.trackers[0]  # Always use the first tracker
+        tracker = self.trackers[self.state.last_used_tracker]
 
         if not tracker.thread.isRunning():
             tracker.on_start_tracking()

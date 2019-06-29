@@ -3,6 +3,7 @@ import paramiko
 from scp import SCPClient, SCPException
 import time
 import json
+import socket
 
 from PyQt5.QtWidgets import QGroupBox, QLabel, QLineEdit, QFormLayout, QPushButton, QMessageBox
 from PyQt5.QtCore import QThread, pyqtSignal
@@ -53,8 +54,8 @@ class SSHLogin(QGroupBox, StateListener):
         hostname, username, password = self.hostname.text(), self.username.text(), self.password.text()
 
         try:
-            self.ssh_client.connect(hostname, username=username, password=password)
-        except paramiko.SSHException as e:
+            self.ssh_client.connect(hostname, username=username, password=password, timeout=8)
+        except (socket.error, paramiko.SSHException) as e:
             QMessageBox.warning(self, "", "Couldn't connect to the server.\n{}".format(str(e)))
         else:
             self.save_credentials(hostname, username, password)
@@ -100,7 +101,7 @@ class SSHLogin(QGroupBox, StateListener):
         # Killing possible previous socket server
         stdin, stdout, stderr = self.ssh_client.exec_command("tmux kill-session -t tracking_1")
         stdin, stdout, stderr = self.ssh_client.exec_command("tmux kill-session -t tracking_2")
-        stdin, stdout, stderr = self.ssh_client.exec_command("tmux kill-session -t tracking_3")
+        # stdin, stdout, stderr = self.ssh_client.exec_command("tmux kill-session -t tracking_3")
 
         stdin, stdout, stderr = self.ssh_client.exec_command('cd UltimateLabeling_server && source siamMask/env/bin/activate && tmux new -d -s tracking_1 '
                                                              '"CUDA_VISIBLE_DEVICES=0 python -m tracker -p 8787"')
@@ -108,8 +109,8 @@ class SSHLogin(QGroupBox, StateListener):
         stdin, stdout, stderr = self.ssh_client.exec_command('cd UltimateLabeling_server && source siamMask/env/bin/activate && tmux new -d -s tracking_2 '
                                                              '"CUDA_VISIBLE_DEVICES=0 python -m tracker -p 8788"')
 
-        stdin, stdout, stderr = self.ssh_client.exec_command('cd UltimateLabeling_server && source siamMask/env/bin/activate && tmux new -d -s tracking_3 '
-                                                             '"CUDA_VISIBLE_DEVICES=0 python -m tracker -p 8789"')
+        # stdin, stdout, stderr = self.ssh_client.exec_command('cd UltimateLabeling_server && source siamMask/env/bin/activate && tmux new -d -s tracking_3 '
+        #                                                      '"CUDA_VISIBLE_DEVICES=0 python -m tracker -p 8789"')
 
         print(stdout.read().decode())
         print(stderr.read().decode())
