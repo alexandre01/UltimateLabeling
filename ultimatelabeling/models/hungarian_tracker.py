@@ -13,8 +13,8 @@ import pdb
 #
 # Use hungarian algorithm to track the vehicles
 # Read from {scene}_all.txt and output to {scene}_tracked_all.txt
-# Input format: "frame",'cls_no', 'xc', 'yc', 'w', 'h'
-# Output format: "frame",'cls_no', "id", 'xc', 'yc', 'w', 'h', 'infer'
+# Input format: "frame",'class_id', 'xc', 'yc', 'w', 'h'
+# Output format: "frame",'class_id', "track_id", 'xc', 'yc', 'w', 'h', 'infer'
 #
 
 def get_bbox_position(arr, dtype=float):
@@ -22,20 +22,20 @@ def get_bbox_position(arr, dtype=float):
 
 
 def merge_trajectories(df, joint_distance):
-    idxs = pd.unique(df["id"])
-    id_ranges = [(idx, df.loc[df['id'] == idx]["frame"].min(), df.loc[df['id'] == idx]["frame"].max()) for idx in idxs]
+    idxs = pd.unique(df["track_id"])
+    id_ranges = [(idx, df.loc[df['track_id'] == idx]["frame"].min(), df.loc[df['track_id'] == idx]["frame"].max()) for idx in idxs]
     correct_df = df.copy()
 
     # Seek for wrongly splitted trajectories
     wrong_list = []
     wrong_idxs = []
     for idx, _, e in id_ranges:
-        x = df.loc[(df['id'] == idx) & (df['frame'] == e)]['xc'].values[0]
-        y = df.loc[(df['id'] == idx) & (df['frame'] == e)]['yc'].values[0]
+        x = df.loc[(df['track_id'] == idx) & (df['frame'] == e)]['xc'].values[0]
+        y = df.loc[(df['track_id'] == idx) & (df['frame'] == e)]['yc'].values[0]
         id_in_next_frame = filter(lambda x: x[0] != idx and x[1] == e + 1, id_ranges)
         for idx_n, s_n, _ in id_in_next_frame:
-            x_n = df.loc[(df['id'] == idx_n) & (df['frame'] == s_n)]['xc'].values[0]
-            y_n = df.loc[(df['id'] == idx_n) & (df['frame'] == s_n)]['yc'].values[0]
+            x_n = df.loc[(df['track_id'] == idx_n) & (df['frame'] == s_n)]['xc'].values[0]
+            y_n = df.loc[(df['track_id'] == idx_n) & (df['frame'] == s_n)]['yc'].values[0]
             dist = math.sqrt((x - x_n) ** 2 + (y - y_n) ** 2)
             # If distance between the centers of two bounding boxes is less than joint distance
             if dist < joint_distance:
@@ -62,21 +62,21 @@ def merge_trajectories(df, joint_distance):
     # Assign wrong id to correct one
     for k, idx_list in correct_dict.items():
         for idx in idx_list:
-            correct_df.loc[correct_df["id"] == idx, "id"] = k
+            correct_df.loc[correct_df["track_id"] == idx, "track_id"] = k
 
     # Re-assign sequence of ids, starting from 0
-    for k, idx in enumerate(list(pd.unique(correct_df['id']))):
-        correct_df.loc[correct_df["id"] == idx, "id"] = k
+    for k, idx in enumerate(list(pd.unique(correct_df['track_id']))):
+        correct_df.loc[correct_df["track_id"] == idx, "track_id"] = k
 
     return correct_df
 
 
 def major_vote_for_class(df):
-    grouped = df.groupby("id")
+    grouped = df.groupby("track_id")
     for uid, group in grouped:
-        votes = np.unique(group['cls_no'], return_counts=True)
+        votes = np.unique(group['class_id'], return_counts=True)
         true_class = max(list(zip(votes[0], votes[1])), key=lambda x: x[1])[0]
-        df.loc[df.id == uid, 'cls_no'] = true_class
+        df.loc[df.track_id == uid, 'class_id'] = true_class
     return df
 
 
@@ -92,7 +92,7 @@ def linear_interpolation(df):
         y_e = pre_yc - pre_h / 2
         return x_s <= offset and x_e >= (img_w - offset) and y_s <= offset and y_e >= (img_h - offset)
 
-    grouped_id = df.groupby('id')
+    grouped_id = df.groupby('track_id')
     for idx, df_f in grouped_id:
         total_frames = df_f['frame'].max() - df_f['frame'].min() + 1
         if len(df_f) != total_frames:
@@ -115,8 +115,8 @@ def linear_interpolation(df):
                             ratio = (p - pre) / (f - pre)
                             p_xc = pre_row.xc.values[0] + int(x_dist * ratio)
                             p_yc = pre_row.yc.values[0] + int(y_dist * ratio)
-                            s = pd.Series({'frame': int(p), 'cls_no': int(pre_row.cls_no.values[0]),
-                                           'id': int(pre_row.id.values[0]),
+                            s = pd.Series({'frame': int(p), 'class_id': int(pre_row.class_id.values[0]),
+                                           'track_id': int(pre_row.track_id.values[0]),
                                            "xc": p_xc, "yc": p_yc, "w": pre_row.w.values[0], "h": pre_row.h.values[0],
                                            "infer": 1})
                             df = df.append(s, ignore_index=True)
@@ -236,13 +236,13 @@ def track(df, max_distance = 100, max_frame=20, joint_distance=20, class_infer=T
     # rewrite ground truth with label
     print("Assigning labels....")
     for t, y in enumerate(Y):
-        df.loc[df["frame"] == t, "id"] = y
+        df.loc[df["frame"] == t, "track_id"] = y
 
     print("Merge wrongly separeted trajectories....")
     df = merge_trajectories(df, joint_distance)
 
     # Enhance the result
-    # Use major vote to unify the class of an id
+    # Use major vote to unify the class of a track_id
     if class_infer:
         print("Inferring the class in in a trajectory.....")
         df = major_vote_for_class(df)

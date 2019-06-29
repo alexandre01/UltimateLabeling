@@ -32,17 +32,6 @@ class Anchor:
         return "Anchor({})".format(self.anchor)
 
 
-class TimerThread(QThread):
-    finished_signal = pyqtSignal()
-
-    def __init__(self, parent):
-        super().__init__()
-        self.parent = parent
-
-    def run(self):
-        time.sleep(0.5)
-        self.finished_signal.emit()
-
 class AnchorQuadTree:
     MAX_PER_NODE = 5
     MAX_DEPTH = 8
@@ -235,9 +224,6 @@ class ImageWidget(QWidget, StateListener, KeyboardListener):
         self.current_frame = None
         self.current_video = None
 
-        # self.timer_thread = TimerThread(self)
-        # self.timer_thread.finished_signal.connect(self.update_quadtrees)
-
         self.on_current_frame_change()
 
     def get_visible_area(self):
@@ -256,9 +242,6 @@ class ImageWidget(QWidget, StateListener, KeyboardListener):
         return offset_x, offset_y, width, height
 
     def on_current_frame_change(self):
-
-        # if self.timer_thread.isRunning():
-        #    self.timer_thread.terminate()
         self.state.drawing = True
 
         is_different_img = self.current_frame != self.state.current_frame or self.current_video != self.state.current_video
@@ -288,8 +271,6 @@ class ImageWidget(QWidget, StateListener, KeyboardListener):
         self.keypoints_quadtree = KeypointQuadTree(Bbox(0, 0, w, h))
 
         if is_different_img:
-            # self.timer_thread.start()
-
             # Only build the quadtrees when frame mode is not controlled
             if self.state.frame_mode == FrameMode.MANUAL:
                 self.update_quadtrees()

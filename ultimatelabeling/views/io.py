@@ -34,14 +34,26 @@ class IO:
 
         h, w = self.state.image_size
 
+        counter = 0
         for file_name in self.state.get_file_names():
             if file_name in imported_base_names:
                 idx = imported_base_names.index(file_name)
-                df = pd.read_csv(imported_files[idx], names=["cls_no", "xc", "yc", "w", "h"], sep=" ", header=None, index_col=False)
+                df = pd.read_csv(imported_files[idx], names=["class_id", "xc", "yc", "w", "h"], sep=" ", header=None, index_col=False)
 
                 # Convert coordinates from percentage to absolute
                 df.xc, df.w = df.xc * w, df.w * w
                 df.yc, df.h = df.yc * h, df.h * h
+
+                df["x"] = df.xc - df.w / 2
+                df["y"] = df.yc - df.h / 2
+                df["polygon"] = ""
+                df["kp"] = ""
+
+                n = len(df)
+                df["track_id"] = range(counter, counter + n)
+                counter += n
+
+                df = df[["track_id", "class_id", "x", "y", "w", "h", "polygon", "kp"]]
 
                 self.state.track_info.write_from_df(df, file_name)
 

@@ -6,6 +6,7 @@ import time
 from .polygon import Polygon, Bbox, Keypoints
 from ultimatelabeling.class_names import DEFAULT_CLASS_NAMES
 from ultimatelabeling.config import OUTPUT_DIR
+from tqdm import tqdm
 
 
 class Detection:
@@ -29,6 +30,15 @@ class Detection:
             "bbox": self.bbox.to_json(),
             "keypoints": self.keypoints.to_json()
         }
+
+    def to_dict(self):
+        return {"track_id": self.track_id, "class_id": self.class_id, **self.bbox.to_dict(),
+                "polygon": self.polygon.to_str(), "kp": self.keypoints.to_str()}
+
+    @staticmethod
+    def from_df(row):
+        bbox = Bbox(row.x, row.y, row.w, row.h)
+        return Detection(row.class_id, row.track_id, Polygon.from_str(row.polygon), bbox, Keypoints.from_str(row.kp))
 
     def copy(self):
         return Detection(self.class_id, self.track_id, self.polygon.copy(), self.bbox.copy(), self.keypoints.copy())
@@ -68,59 +78,60 @@ class TrackInfo:
             self.nb_track_ids = data["nb_track_ids"]
             self.class_names = {int(k): v for k, v in json.loads(data["class_names"]).items()}
 
+    @staticmethod
+    def df_from_csv(file_name):
+        if not os.path.exists(file_name):
+            return pd.DataFrame(columns=["track_id", "class_id", "x", "y", "w", "h", "polygon", "kp"])
+
+        return pd.read_csv(file_name, header=None, names=["track_id", "class_id", "x", "y", "w", "h", "polygon", "kp"],
+                           na_filter=False)
+
+    @staticmethod
+    def df_to_csv(df, file_name):
+        df.to_csv(file_name, index=None, header=False)
+
+    @staticmethod
+    def df_add_detection(df, detection: Detection):
+        return df.append(detection.to_dict(), ignore_index=True)
+
     def to_df(self, file_names):
-        df = pd.DataFrame(columns=["frame", 'cls_no', "id", 'xc', 'yc', 'w', 'h', 'infer'])
+        df = pd.DataFrame(columns=["frame", "class_id", "track_id", "xc", "yc", "w", "h", "infer", "polygon", "kp"])
 
         for i, file_name in enumerate(file_names):
             txt_file = os.path.join(OUTPUT_DIR, "{}/{}.txt".format(self.video_name, file_name))
-
             if not os.path.exists(txt_file):
                 continue
 
-            with open(txt_file, "r") as f:
-                for d in f:
-                    detection = json.loads(d.rstrip('\n'))
-                    bbox = Bbox(*detection["bbox"]).xcycwh
-                    df = df.append({"frame": i, "cls_no": detection["class_id"], "id": detection["track_id"],
-                                    "xc": bbox[0], "yc": bbox[1], "w": bbox[2], "h": bbox[3], "infer": 0}, ignore_index=True)
+            df_frame = self.df_from_csv(txt_file)
+            df_frame["frame"] = i
+            df_frame["xc"] = df_frame["x"] + df_frame["w"] / 2
+            df_frame["yc"] = df_frame["y"] + df_frame["h"] / 2
+            df_frame["infer"] = 0
 
-        df[["frame", "cls_no", "id", "infer"]] = df[["frame", "cls_no", "id", "infer"]].astype(int)
+            df_frame = df_frame[["frame", "class_id", "track_id", "xc", "yc", "w", "h", "infer", "polygon", "kp"]]
+            df = df.append(df_frame, ignore_index=True)
         return df
 
     def from_df_all(self, df, file_names):
+        df["x"] = df.xc - df.w / 2
+        df["y"] = df.yc - df.h / 2
+
+        df[["class_id", "track_id"]] = df[["class_id", "track_id"]].astype(int)
+        df[["x", "y", "w", "h"]] = df[["x", "y", "w", "h"]].astype(float)
 
         for i, file_name in enumerate(file_names):
-            detections = df[df.frame == i]
-
             txt_file = os.path.join(OUTPUT_DIR, "{}/{}.txt".format(self.video_name, file_name))
-            with open(txt_file, "w") as f:
-                for _, row in detections.iterrows():
-                    # TODO: doing this we loose polgon, keypoints info
 
-                    center, size = np.array([row["xc"], row["yc"]], dtype=float), np.array([row["w"], row["h"]], dtype=float)
-                    bbox = Bbox.from_center_size(center, size)
-
-                    d = Detection(class_id=int(row["cls_no"]), track_id=int(row["id"]),
-                                  bbox=bbox)
-                    f.write("{}\n".format(json.dumps(d.to_json())))
-
-        # TODO: update nb_track_ids?
+            df_frame = df[df.frame == i]
+            df_frame = df_frame[["track_id", "class_id", "x", "y", "w", "h", "polygon", "kp"]]
+            self.df_to_csv(df_frame, txt_file)
 
         # Update current detections
         self.detections = self.get_detections(self.file_name)
 
     def write_from_df(self, df, file_name):
         txt_file = os.path.join(OUTPUT_DIR, "{}/{}.txt".format(self.video_name, file_name))
-
-        with open(txt_file, "w") as f:
-            for _, row in df.iterrows():
-                center, size = np.array([row["xc"], row["yc"]], dtype=float), np.array([row["w"], row["h"]], dtype=float)
-                bbox = Bbox.from_center_size(center, size)
-                d = Detection(class_id=int(row["cls_no"]), track_id=self.nb_track_ids, bbox=bbox)
-                f.write("{}\n".format(json.dumps(d.to_json())))
-
-                # Update nb_track_ids
-                self.nb_track_ids += 1
+        self.df_to_csv(df, txt_file)
 
         # Update current detections
         if file_name == self.file_name:
@@ -132,8 +143,8 @@ class TrackInfo:
         if not os.path.exists(txt_file):
             return []
 
-        with open(txt_file, "r") as f:
-            return [Detection.from_json(json.loads(detection.rstrip('\n'))) for detection in f]
+        df = self.df_from_csv(txt_file)
+        return [Detection.from_df(row) for _, row in df.iterrows()]
 
     def load_detections(self, file_name):
         self.file_name = file_name
@@ -160,35 +171,27 @@ class TrackInfo:
         if file_name == self.file_name:
             self.detections = detections
 
-        with open(txt_file, "w") as f:
-            for d in detections:
-                f.write("{}\n".format(json.dumps(d.to_json())))
+        df = pd.DataFrame(columns=["track_id", "class_id", "x", "y", "w", "h", "polygon", "kp"])
+        if len(detections) > 0:
+            df = df.append([d.to_dict() for d in detections], ignore_index=True)
+        self.df_to_csv(df, txt_file)
 
         self.nb_track_ids = max(self.nb_track_ids, max([d.track_id for d in detections] or [0]) + 1)
 
-    def add_detection(self, detection, file_name=None):
+    def add_detection(self, detection: Detection, file_name=None):
         if file_name is None or file_name == self.file_name:
             self.detections.append(detection)
         else:
             txt_file = os.path.join(OUTPUT_DIR, "{}/{}.txt".format(self.video_name, file_name))
             track_id = detection.track_id
 
-            counter = 0
-            with open(txt_file, "r+") as f:
-                detections = f.readlines()
-                f.seek(0)
-                for d in detections:
-                    d_json = json.loads(d.rstrip('\n'))
-                    if d_json["track_id"] != track_id:
-                        f.write(d)
-                    else:
-                        d_json["bbox"] = detection.bbox.to_json()
-                        f.write("{}\n".format(json.dumps(d_json)))
-                        counter += 1
-
-                if counter == 0:
-                    f.write("{}\n".format(json.dumps(detection.to_json())))
-                f.truncate()
+            df = self.df_from_csv(txt_file)
+            count = (df.track_id == track_id).sum()
+            if count > 0:
+                df[df.track_id == track_id] = detection.to_dict()
+                self.df_to_csv(df, txt_file)
+            else:
+                self.df_to_csv(self.df_add_detection(df, detection), txt_file)
 
         self.nb_track_ids = max(self.nb_track_ids, detection.track_id + 1)
 
@@ -206,18 +209,14 @@ class TrackInfo:
         if not os.path.exists(txt_file):
             return False
 
-        counter = 0
-        with open(txt_file, "r+") as f:
-            detections = f.readlines()
-            f.seek(0)
-            for d in detections:
-                if json.loads(d.rstrip('\n'))["track_id"] != track_id:
-                    f.write(d)
-                else:
-                    counter += 1
-            f.truncate()
+        df = self.df_from_csv(txt_file)
 
-        return counter > 0
+        count = (df.track_id == track_id).sum()
+        if count == 0:
+            return False
+
+        self.df_to_csv(df[df.track_id != track_id], txt_file)
+        return True
 
     def get_min_available_track_id(self):
         return self.nb_track_ids
@@ -239,18 +238,12 @@ class TrackInfo:
         if not os.path.exists(txt_file):
             return False
 
-        counter = 0
-        with open(txt_file, "r+") as f:
-            detections = f.readlines()
-            f.seek(0)
-            for d in detections:
-                d_json = json.loads(d.rstrip('\n'))
-                if d_json["track_id"] != track_id:
-                    f.write(d)
-                else:
-                    d_json["class_id"] = class_id
-                    f.write("{}\n".format(json.dumps(d_json)))
-                    counter += 1
-            f.truncate()
+        df = self.df_from_csv(txt_file)
 
-        return counter > 0
+        count = (df.track_id == track_id).sum()
+        if count == 0:
+            return False
+
+        df[df.track_id == track_id].class_id = class_id
+        self.df_to_csv(df, txt_file)
+        return True

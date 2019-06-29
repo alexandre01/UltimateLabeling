@@ -126,12 +126,13 @@ class State:
         self.frame_mode = FrameMode.MANUAL
 
     def set_current_frame(self, current_frame, frame_mode=None):
+        self.track_info.save_to_disk()
+
         self.current_frame = current_frame
 
         if frame_mode is not None:
             self.frame_mode = frame_mode
 
-        self.track_info.save_to_disk()
         self.track_info.load_detections(self.get_file_name())
 
         self.notify_listeners("on_current_frame_change")
@@ -190,20 +191,15 @@ class State:
 
         track_id = detection.track_id
 
-        print("remove detection")
-
         if self.right_click_option == RightClickOption.DELETE_CURRENT:
-            print("current")
             self.track_info.remove_detection(track_id, self.get_file_name())
 
         elif self.right_click_option == RightClickOption.DELETE_FOLLOWING:
-            print("following")
             for i in range(self.current_frame, self.nb_frames):
                 if not self.track_info.remove_detection(track_id, self.get_file_name(i)):
                     break
 
         elif self.right_click_option == RightClickOption.DELETE_PREVIOUS:
-            print("previous")
             for i in range(self.current_frame, -1, -1):
                 if not self.track_info.remove_detection(track_id, self.get_file_name(i)):
                     break

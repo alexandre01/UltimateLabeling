@@ -86,14 +86,16 @@ To start labeling your videos, put these (folder of images or video file, the fr
 If you need other file formats for your projects, please write a GitHub issue or submit a Pull request.
 
 
-## Shortcuts
+## Shortcuts / mouse controls
+
+<img src="docs/keyboard_shortcuts.jpg" width=50%" />
 
 Keyboard:
 - A (or Left key): next frame
 - D (or Right key): previous frame
 - W/S: class up/down
 - T: start/stop tracking (last used tracker)
-- Numberpad: asssign given class_id
+- Numberpad: assign given class_id
 - Spacebar: play the video
 
 Mouse:
