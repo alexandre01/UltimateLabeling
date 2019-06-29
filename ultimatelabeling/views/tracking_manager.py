@@ -4,7 +4,7 @@ from ultimatelabeling.models.tracker import SocketTracker, KCFTracker
 from ultimatelabeling.models import Detection, FrameMode
 from ultimatelabeling.models import KeyboardListener
 
-PORTS = [8787, 8788]
+PORTS = [0, 8787, 8788]
 
 
 class TrackingThread(QThread):
@@ -59,6 +59,7 @@ class TrackingThread(QThread):
 
             if (self.state.frame_mode == FrameMode.CONTROLLED and self.selected) or self.state.current_frame == frame:
                 self.state.set_current_frame(frame)
+                self.state.current_detection = detection
 
             frame += 1
 
@@ -108,7 +109,7 @@ class TrackingButtons(QGroupBox):
         QMessageBox.warning(self, "", "Error: {}".format(err_message))
 
     def on_start_tracking(self):
-        if not self.state.tracking_server_running and self.i < 2:
+        if not self.state.tracking_server_running and self.i >= 1:
             QMessageBox.warning(self, "", "Tracking server is not connected.")
             return
 
@@ -143,9 +144,9 @@ class TrackingManager(QGroupBox, KeyboardListener):
         self.state = state
 
         self.trackers = [
-            TrackingButtons(self.state, self, 0, "SiamMask"),
+            TrackingButtons(self.state, self, 0, "KCF"),
             TrackingButtons(self.state, self, 1, "SiamMask"),
-            TrackingButtons(self.state, self, 2, "KCF")
+            TrackingButtons(self.state, self, 2, "SiamMask")
         ]
 
         layout = QHBoxLayout()
@@ -156,13 +157,11 @@ class TrackingManager(QGroupBox, KeyboardListener):
         self.setLayout(layout)
 
     def select(self, selected_i):
-        self.state.last_used_tracker = selected_i
-
         for i, tracker in enumerate(self.trackers):
             tracker.thread.selected = i == selected_i
 
-    def on_key_tracker(self):
-        tracker = self.trackers[self.state.last_used_tracker]
+    def on_key_tracker(self, index):
+        tracker = self.trackers[index]
 
         if not tracker.thread.isRunning():
             tracker.on_start_tracking()

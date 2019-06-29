@@ -45,8 +45,6 @@ class State:
 
         self.right_click_option = RightClickOption.DELETE_CURRENT
 
-        self.last_used_tracker = 0
-
         self.keypoints_show_bbox = False
         self.keypoints_instance_color = False
         self.bbox_class_color = False

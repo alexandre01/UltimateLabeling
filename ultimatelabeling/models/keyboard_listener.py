@@ -33,8 +33,8 @@ class KeyboardNotifier:
         if event.key() in [Qt.Key_W, Qt.Key_S]:
             self.notify_listeners("on_key_ws", event.key() == Qt.Key_W)
 
-        if event.key() == Qt.Key_T:
-            self.notify_listeners("on_key_tracker")
+        if event.key() in [Qt.Key_E, Qt.Key_R, Qt.Key_T]:
+            self.notify_listeners("on_key_tracker", [Qt.Key_E, Qt.Key_R, Qt.Key_T].index(event.key()))
 
     def keyReleaseEvent(self, event):
           if event.key() == Qt.Key_Control:
@@ -74,5 +74,5 @@ class KeyboardListener:
     def on_key_ws(self, go_up):
         pass
 
-    def on_key_tracker(self):
+    def on_key_tracker(self, index):
         pass
