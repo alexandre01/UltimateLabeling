@@ -88,7 +88,7 @@ If you need other file formats for your projects, please write a GitHub issue or
 
 ## Shortcuts / mouse controls
 
-<img src="docs/keyboard_shortcuts.jpg" width=50%" />
+<img src="docs/keyboard_shortcuts.jpg" width="50%" />
 
 Keyboard:
 - A (or Left key): next frame
@@ -97,6 +97,8 @@ Keyboard:
 - T: start/stop tracking (last used tracker)
 - Numberpad: assign given class_id
 - Spacebar: play the video
+
+
 
 Mouse:
 - Click: select bounding box
