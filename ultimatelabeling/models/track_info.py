@@ -188,7 +188,7 @@ class TrackInfo:
             df = self.df_from_csv(txt_file)
             count = (df.track_id == track_id).sum()
             if count > 0:
-                df[df.track_id == track_id] = detection.to_dict()
+                df[df.track_id == track_id] = detection.to_dict().values()
                 self.df_to_csv(df, txt_file)
             else:
                 self.df_to_csv(self.df_add_detection(df, detection), txt_file)

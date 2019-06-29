@@ -28,7 +28,7 @@ setup(
 
     install_requires=[
        'PyQt5',
-        'opencv-python',
+        'opencv-contrib-python',
         'paramiko',
         'scp',
         'pynput',
