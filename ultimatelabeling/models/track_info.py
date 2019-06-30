@@ -84,11 +84,11 @@ class TrackInfo:
             return pd.DataFrame(columns=["track_id", "class_id", "x", "y", "w", "h", "polygon", "kp"])
 
         return pd.read_csv(file_name, header=None, names=["track_id", "class_id", "x", "y", "w", "h", "polygon", "kp"],
-                           na_filter=False)
+                           na_filter=False, sep=" ")
 
     @staticmethod
     def df_to_csv(df, file_name):
-        df.to_csv(file_name, index=None, header=False)
+        df.to_csv(file_name, index=None, header=False, sep=" ")
 
     @staticmethod
     def df_add_detection(df, detection: Detection):
