@@ -244,6 +244,8 @@ class ImageWidget(QWidget, StateListener, KeyboardListener):
     def on_current_frame_change(self):
         self.state.drawing = True
 
+        start_time = time.time()
+
         is_different_img = self.current_frame != self.state.current_frame or self.current_video != self.state.current_video
         if is_different_img:
             self.current_frame = self.state.current_frame
@@ -440,6 +442,11 @@ class ImageWidget(QWidget, StateListener, KeyboardListener):
         self.update_zoom_offset()
 
     def mouseMoveEvent(self, event):
+
+        if self.state.frame_mode == FrameMode.SLIDER:
+            self.state.frame_mode = FrameMode.MANUAL
+            self.update_quadtrees()
+
         if event.buttons() == Qt.NoButton:
             pos = self.get_abs_pos(event.pos())
 

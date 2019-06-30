@@ -13,6 +13,7 @@ from ultimatelabeling.config import DATA_DIR, STATE_PATH
 class FrameMode:
     MANUAL = "manual"  # for manually choosing the current frame
     CONTROLLED = "controlled"  # when the current frame is being controlled by some thread (Player, Tracker, ...)
+    SLIDER = "slider"
 
 
 class RightClickOption:

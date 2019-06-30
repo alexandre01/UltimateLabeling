@@ -21,7 +21,7 @@ class VideoSlider(QWidget, StateListener, KeyboardListener):
         self.slider.setTickInterval(5)
         self.slider.setSingleStep(1)
         self.slider.setStyleSheet(open(os.path.join(RESOURCES_DIR, 'slider.style')).read())
-        self.slider.valueChanged.connect(lambda: self.state.set_current_frame(self.slider.value(), frame_mode=FrameMode.MANUAL))
+        self.slider.valueChanged.connect(lambda: self.state.set_current_frame(self.slider.value(), frame_mode=FrameMode.SLIDER))
 
         self.label = QLabel()
         self.label.setFixedWidth(150)
@@ -46,8 +46,7 @@ class VideoSlider(QWidget, StateListener, KeyboardListener):
         if type(event) != QKeyEvent:
             event.ignore()
 
-        if event.key() == Qt.Key_Space:
-            self.keyboard_notifier.keyPressEvent(event)
+        self.keyboard_notifier.keyPressEvent(event)  # delegate to keyboard_notifier
 
     def on_current_frame_change(self):
         self.slider.blockSignals(True)  # Don't trigger valueChanged
