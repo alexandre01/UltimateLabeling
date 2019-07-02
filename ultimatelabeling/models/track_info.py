@@ -244,6 +244,7 @@ class TrackInfo:
         if count == 0:
             return False
 
-        df[df.track_id == track_id].class_id = class_id
+        df.loc[df.track_id == track_id, "class_id"] = class_id
+
         self.df_to_csv(df, txt_file)
         return True
