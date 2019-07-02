@@ -68,7 +68,7 @@ class VideoSlider(QWidget, StateListener, KeyboardListener):
         if self.state.current_detection is not None:
             current_detection = self.state.current_detection.copy()
 
-        self.state.increase_current_frame(frame_mode=FrameMode.MANUAL, speed=+1)
+        self.state.increase_current_frame(frame_mode=FrameMode.MANUAL, speed=-1)
 
         if current_detection and self.state.copy_annotations_option:
             track_ids = [d.track_id for d in self.state.track_info.detections]
