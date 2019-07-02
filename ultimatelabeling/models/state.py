@@ -46,6 +46,8 @@ class State:
 
         self.right_click_option = RightClickOption.DELETE_CURRENT
 
+        self.speed_player = +1
+
         self.keypoints_show_bbox = False
         self.keypoints_instance_color = False
         self.bbox_class_color = False
@@ -97,7 +99,7 @@ class State:
     def save_state(self):
         with open(STATE_PATH, 'wb') as f:
             state_dict = {k: v for k, v in self.__dict__.items() if k not in ["listeners", "track_info", "drawing",
-                                                                              "img_viewer"]}
+                                                                              "img_viewer", "speed_player"]}
             pickle.dump(state_dict, f)
 
     def load_state(self):
@@ -136,12 +138,11 @@ class State:
 
         self.notify_listeners("on_current_frame_change")
 
-    def increase_current_frame(self, frame_mode=None):
-        new_frame = min(self.current_frame + 1, self.nb_frames - 1)
-        self.set_current_frame(new_frame, frame_mode=frame_mode)
+    def increase_current_frame(self, frame_mode=None, speed=None):
+        if speed is None:
+            speed = self.speed_player
 
-    def decrease_current_frame(self, frame_mode=None):
-        new_frame = max(self.current_frame - 1, 0)
+        new_frame = max(min(self.current_frame + speed, self.nb_frames - 1), 0)
         self.set_current_frame(new_frame, frame_mode=frame_mode)
 
     def set_current_video(self, video_name):
