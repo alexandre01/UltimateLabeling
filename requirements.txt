@@ -1,5 +1,5 @@
 PyQt5
-opencv-contrib-python
+opencv-contrib-python==4.1.2.30
 paramiko
 scp
 pynput
