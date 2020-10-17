@@ -81,6 +81,7 @@ class State:
     def check_raw_videos(self):
         files = glob.glob(os.path.join(DATA_DIR, "*.mp4"))
         files.extend(glob.glob(os.path.join(DATA_DIR, "*.mov")))
+        files.extend(glob.glob(os.path.join(DATA_DIR, "*.avi")))        # support for AVI files
 
         for file in files:
             base = os.path.basename(file)
@@ -88,7 +89,12 @@ class State:
 
             if filename not in self.video_list:
                 print("Extracting video {}...".format(base))
-                utils.convert_video_to_frames(file, os.path.join(DATA_DIR, filename))
+                if utils.is_platform_windows():
+                    # perhaps it is possible to use opencv on all platforms for uniformity?
+                    utils.convert_video_to_frames_opencv(file, os.path.join(DATA_DIR, filename))
+                else:
+                    utils.convert_video_to_frames(file, os.path.join(DATA_DIR, filename))
+
         self.video_list = self.find_videos()
 
     def update_file_names(self):

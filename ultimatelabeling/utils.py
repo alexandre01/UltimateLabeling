@@ -15,6 +15,10 @@ COCO_PERSON_SKELETON = [
     [2, 4], [3, 5], [4, 6], [5, 7]]
 
 
+def is_platform_windows():
+    from sys import platform
+    return platform == "win32"
+
 def get_color(id):
     np.random.seed(id)
     return tuple(map(int, np.random.choice(range(256), size=3)))
@@ -123,11 +127,9 @@ def subdivide_bbox(bbox):
 def convert_video_to_frames(video_file, output_folder):
     subprocess.check_call(['/bin/bash', 'extract_all.sh', video_file, output_folder])
 
-def convert_video_to_frames_opencv(video_file, output_folder):
+def convert_video_to_frames_opencv(video_file, output_folder, MAX_FRAMES = 1000):
     if not os.path.exists(output_folder):
-        os.makedirs(output_folder)
-
-    MAX_FRAMES = 1000
+        os.makedirs(output_folder)   
 
     vidcap = cv2.VideoCapture(video_file)
     nb_frames = int(vidcap.get(cv2.CAP_PROP_FRAME_COUNT))
