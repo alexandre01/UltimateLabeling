@@ -1,13 +1,12 @@
 # UltimateLabeling
 
-![Build Status](https://github.com/alexandre01/UltimateLabeling/actions/workflows/main.yml/badge.svg)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![PyPI](https://img.shields.io/pypi/pyversions/ultimatelabeling.svg)](https://pypi.python.org/pypi/ultimatelabeling)
 [![PyPI](https://img.shields.io/pypi/v/ultimatelabeling.svg)](https://pypi.python.org/pypi/ultimatelabeling) 
 
 ![GitHub stars](https://img.shields.io/github/stars/alexandre01/UltimateLabeling.svg?style=social)
 
-- BricksAR: [link](https://www.bricksar.com)
+**Sponsored by [BricksAR](https://www.bricksar.com): Build a LEGO city in AR**
 
 A multi-purpose Video Labeling GUI in Python with integrated SOTA detector and tracker. Developed using PyQt5.
 
