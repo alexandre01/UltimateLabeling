@@ -7,6 +7,8 @@
 
 ![GitHub stars](https://img.shields.io/github/stars/alexandre01/UltimateLabeling.svg?style=social)
 
+- BricksAR: [link](https://www.bricksar.com)
+
 A multi-purpose Video Labeling GUI in Python with integrated SOTA detector and tracker. Developed using PyQt5.
 
 ## Features
