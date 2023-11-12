@@ -51,6 +51,17 @@ Otherwise, just install the requirements on your main Python environment using `
 pip install -r requirements
 ```
 
+Extract all frames from video files.
+You can copy all your videos to the `data` folder and run the scrip to extract all videos in the folder by using
+```
+sh extract_all_videos_files.sh
+```
+or you can use the below script to extract one file
+```
+sh extract_all.sh data/video_file.MOV
+```
+
+
 Finally, open the GUI using: 
 ```bash
 python -m ultimatelabeling.main
