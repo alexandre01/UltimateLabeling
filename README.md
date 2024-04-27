@@ -6,7 +6,7 @@
 
 ![GitHub stars](https://img.shields.io/github/stars/alexandre01/UltimateLabeling.svg?style=social)
 
-**Sponsored by [BricksAR](https://www.bricksar.com): Build a LEGO city in AR**
+**Sponsored by <img src="https://www.lingosub.com/icon.svg" height=20 width=20 style="vertical-align: middle;"/> [LingoSub](https://www.lingosub.com): Learn languages by watching videos with AI-powered translations**
 
 A multi-purpose Video Labeling GUI in Python with integrated SOTA detector and tracker. Developed using PyQt5.
 
