@@ -51,6 +51,19 @@ Otherwise, just install the requirements on your main Python environment using `
 pip install -r requirements
 ```
 
+## Special note on Windows 10:
+On Windows 10, installing `torch` directly from `requirements.txt` file raises the error `ModuleNotFoundError: No module named 'tools.nnwrap'`. To circumvent this, use the `requirements_win.txt` file on Windows.
+
+```bash
+pip install -r requirements_win.txt
+```
+
+Then, head over to [Pytorch website](https://pytorch.org/get-started/locally/), and select the appropriate version that you want to install (CPU-only/GPU) and run the command that the website displays to you. For example, to install the CPU-only version, you would run:
+
+```bash
+pip install torch==1.6.0+cpu torchvision==0.7.0+cpu -f https://download.pytorch.org/whl/torch_stable.html
+```
+
 Finally, open the GUI using: 
 ```bash
 python -m ultimatelabeling.main
